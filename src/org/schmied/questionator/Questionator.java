@@ -1,6 +1,6 @@
 package org.schmied.questionator;
 
-import java.io.File;
+import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
 
@@ -8,9 +8,9 @@ import org.schmied.questionator.graph.*;
 
 public class Questionator {
 
-	private static final String DB_URL = "jdbc:postgresql://localhost/questionator?user=postgres&password=postgres";
+	private static final String DB_URL = "jdbc:postgresql://localhost/questionator_test?user=postgres&password=postgres";
 //	private static final String DB_URL = "jdbc:postgresql://localhost/questionator_old?user=postgres&password=postgres";
-	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-20170905-all.json";
+	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-20180115-all.json.bz2";
 //	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-test.json";
 
 	private final Connection connection;
@@ -46,8 +46,8 @@ public class Questionator {
 
 		if (!DProperty.importProperties(cn))
 			return false;
-		final File dfFile = new File(DUMP_FILE);
-		if (!DItem.importItems(dfFile, cn))
+		final Path file = Paths.get(DUMP_FILE);
+		if (!DItem.importItems(file, cn))
 			return false;
 		if (!DItem.reduceItems(cn))
 			return false;

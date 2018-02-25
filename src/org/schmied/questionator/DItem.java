@@ -1,9 +1,12 @@
 package org.schmied.questionator;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.sql.*;
+import java.time.LocalTime;
 import java.util.*;
 
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.json.JSONObject;
 import org.schmied.questionator.graph.Graphs;
 
@@ -75,38 +78,48 @@ public class DItem extends DEntity {
 		}
 	}
 
-	public static boolean importItems(final File dfFile, final Connection cn) {
+	private static final int MAX_ITEMS = 51000000;
+
+	public static boolean importItems(final Path file, final Connection cn) {
 
 		if (!DClaim.recreateTables(cn))
 			return false;
 		if (!DItem.recreateTable(cn))
 			return false;
 
-		try (final FileInputStream dfFis = new FileInputStream(dfFile);
-				final InputStreamReader dfIsr = new InputStreamReader(dfFis, "US-ASCII");
-				final BufferedReader dfBr = new BufferedReader(dfIsr, 1024 * 1024)) {
+//		try (final InputStream is = Files.newInputStream(dfFile);
+		try (final FileInputStream fis = new FileInputStream(file.toFile());
+				final BZip2CompressorInputStream bz = new BZip2CompressorInputStream(fis);
+				final InputStreamReader isr = new InputStreamReader(bz, "US-ASCII");
+				final BufferedReader br = new BufferedReader(isr, 1024 * 1024)) {
 
 			final long ticks = System.currentTimeMillis();
-			int imported = 0;
+			int countImported = 0;
 
-			dfBr.readLine(); // first line cannot be importet
+			br.readLine(); // first line cannot be importet
 
-			for (int i = 0; i < 45000000; i++) { // 100000000
+			for (int countRead = 0; countRead < MAX_ITEMS; countRead++) {
 				try {
-					final JSONObject json = readLine(dfBr);
+					final JSONObject json = readLine(br);
 					if (json == null) {
-						System.out.println(i + " lines read.");
+						System.out.println(countRead + " lines read.");
 						break;
 					}
 					if (importItem(json, cn) > 0) // if (importItem(json, cn, validClassIds) > 0)
-						imported++;
+						countImported++;
 				} catch (final Exception e) {
 					System.out.println(e.getMessage());
 					break;
 				}
-				if (i % 1000 == 0 && i > 0)
-					System.out
-							.println(imported + " / " + i + " " + (Math.round(100.0 * imported / i)) + "% in " + (System.currentTimeMillis() - ticks) / 1000 / 60 + "m");
+				if (countRead % 1000 == 0 && countRead > 0) {
+					final long secondsElapsed = (System.currentTimeMillis() - ticks) / 1000;
+					long secondsEta = Math.round((double) secondsElapsed * MAX_ITEMS / countRead - secondsElapsed);
+					if (secondsEta < 0)
+						secondsEta = 0;
+					System.out.println(countImported + " / " + countRead + " " + (Math.round(100.0 * countImported / countRead)) + "% in "
+							+ LocalTime.ofSecondOfDay(secondsElapsed).toString() + ", ETA "
+							+ (secondsEta > 86000 ? " > 1d (" + Math.round(secondsEta / 60.0f / 60.0f) + "h)" : LocalTime.ofSecondOfDay(secondsEta).toString()));
+				}
 			}
 
 			DItem.insertClose();
