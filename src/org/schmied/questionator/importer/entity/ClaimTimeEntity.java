@@ -47,6 +47,10 @@ public class ClaimTimeEntity extends ClaimEntity {
 			System.out.println("Q" + itemId + " P" + propertyId + ": year " + year + " out of range for database");
 			return null;
 		}
+		if (year == 0) {
+			System.out.println("Q" + itemId + " P" + propertyId + ": year " + year + " does not exist, using year 1");
+			value = value.plusYears(1);
+		}
 		return new ClaimTimeEntity(itemId, propertyId, value.toLocalDate(), precision);
 	}
 }

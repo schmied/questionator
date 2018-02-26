@@ -8,17 +8,17 @@ import org.schmied.questionator.importer.entity.*;
 
 public abstract class ImporterDatabase extends Database {
 
-	protected abstract boolean flushItems(final List<ItemEntity> entities) throws SQLException;
+	protected abstract boolean flushItems(final List<ItemEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsGeo(final List<ClaimGeoEntity> entities) throws SQLException;
+	protected abstract boolean flushClaimsGeo(final List<ClaimGeoEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsItem(final List<ClaimItemEntity> entities) throws SQLException;
+	protected abstract boolean flushClaimsItem(final List<ClaimItemEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsQuantity(final List<ClaimQuantityEntity> entities) throws SQLException;
+	protected abstract boolean flushClaimsQuantity(final List<ClaimQuantityEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsString(final List<ClaimStringEntity> entities) throws SQLException;
+	protected abstract boolean flushClaimsString(final List<ClaimStringEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsTime(final List<ClaimTimeEntity> entities) throws SQLException;
+	protected abstract boolean flushClaimsTime(final List<ClaimTimeEntity> entities) throws Exception;
 
 	protected abstract boolean closeImportResources();
 
@@ -47,10 +47,13 @@ public abstract class ImporterDatabase extends Database {
 	}
 
 	private boolean flush(final int maxCapacity) {
+		final long ticks = System.currentTimeMillis();
+		int cntFlush = 0;
 		try {
 			if (items.size() >= maxCapacity) {
 				if (!flushItems(items))
 					return false;
+				cntFlush += items.size();
 				items.clear();
 				if (maxCapacity > 0)
 					items.ensureCapacity(maxCapacity);
@@ -58,6 +61,7 @@ public abstract class ImporterDatabase extends Database {
 			if (claimsGeo.size() >= maxCapacity) {
 				if (!flushClaimsGeo(claimsGeo))
 					return false;
+				cntFlush += claimsGeo.size();
 				claimsGeo.clear();
 				if (maxCapacity > 0)
 					claimsGeo.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
@@ -65,6 +69,7 @@ public abstract class ImporterDatabase extends Database {
 			if (claimsItem.size() >= maxCapacity) {
 				if (!flushClaimsItem(claimsItem))
 					return false;
+				cntFlush += claimsItem.size();
 				claimsItem.clear();
 				if (maxCapacity > 0)
 					claimsItem.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
@@ -72,6 +77,7 @@ public abstract class ImporterDatabase extends Database {
 			if (claimsQuantity.size() >= maxCapacity) {
 				if (!flushClaimsQuantity(claimsQuantity))
 					return false;
+				cntFlush += claimsQuantity.size();
 				claimsQuantity.clear();
 				if (maxCapacity > 0)
 					claimsQuantity.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
@@ -79,6 +85,7 @@ public abstract class ImporterDatabase extends Database {
 			if (claimsString.size() >= maxCapacity) {
 				if (!flushClaimsString(claimsString))
 					return false;
+				cntFlush += claimsQuantity.size();
 				claimsString.clear();
 				if (maxCapacity > 0)
 					claimsString.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
@@ -86,13 +93,18 @@ public abstract class ImporterDatabase extends Database {
 			if (claimsTime.size() >= maxCapacity) {
 				if (!flushClaimsTime(claimsTime))
 					return false;
+				cntFlush += claimsTime.size();
 				claimsTime.clear();
 				if (maxCapacity > 0)
 					claimsTime.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
 			}
-		} catch (final SQLException e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 			return false;
+		}
+		if (cntFlush > 0) {
+			final long elapsed = System.currentTimeMillis() - ticks;
+			System.out.println("flush " + cntFlush + " in " + elapsed + "ms (" + Math.round(1000.0 * cntFlush / elapsed) + "rows/s)");
 		}
 		return true;
 	}

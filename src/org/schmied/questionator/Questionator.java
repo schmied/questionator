@@ -61,7 +61,8 @@ public class Questionator {
 		if (q == null)
 			return;
 
-		Importer.importInsert(q.connection, DUMP_FILE);
+//		Importer.importInsert(q.connection, DUMP_FILE);
+		Importer.importCopy(q.connection, DUMP_FILE);
 
 		q.close();
 	}
