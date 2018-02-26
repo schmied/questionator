@@ -7,6 +7,8 @@ public class Database {
 
 	private static final int IN_CLAUSE_MAX_COUNT = 400;
 
+	protected static final int MAX_STRING_LENGTH = 100;
+
 	private final Connection connection;
 
 	public Database(final Connection connection) {
@@ -22,6 +24,21 @@ public class Database {
 		if (end > ids.length)
 			end = ids.length;
 		return Arrays.copyOfRange(ids, begin, end);
+	}
+
+	@SuppressWarnings("all")
+	public static final String validString(String s) {
+		if (s == null)
+			return null;
+		s = s.trim();
+		if (s.isEmpty())
+			return null;
+		if (s.length() > MAX_STRING_LENGTH) {
+			if (s.length() > 2 * MAX_STRING_LENGTH)
+				return null;
+			s = s.substring(0, MAX_STRING_LENGTH);
+		}
+		return s;
 	}
 
 	public static String commaSeparate(final int ids[]) {
@@ -77,19 +94,4 @@ public class Database {
 		}
 		return deleteCount;
 	}
-
-/*
-	public boolean bla(final int[] ids) {
-		if (ids == null)
-			return true;
-		try {
-			for (final int id : ids) {
-			}
-			return true;
-		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-*/
 }

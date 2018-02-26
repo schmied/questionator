@@ -1,33 +1,24 @@
-package org.schmied.questionator;
+package org.schmied.questionator.importer.entity;
 
-import java.sql.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
 import org.json.JSONObject;
 
-public class DClaimTime extends DClaim {
+public class ClaimTimeEntity extends ClaimEntity {
 
-	private final LocalDate value;
-	private final short precision;
+	public final LocalDate value;
+	public final short precision;
 
-	public DClaimTime(final int itemId, final int propertyId, final LocalDate value, final short precision) {
+	public ClaimTimeEntity(final int itemId, final int propertyId, final LocalDate value, final short precision) {
 		super(itemId, propertyId);
 		this.value = value;
 		this.precision = precision;
 	}
 
-	public final LocalDate value() {
-		return value;
-	}
-
-	public final short precision() {
-		return precision;
-	}
-
 	// ---------------------------------------------------------------------------------------------------------------- json
 
-	public static DClaimTime claim(final int itemId, final int propertyId, final JSONObject json) {
+	public static ClaimTimeEntity claim(final int itemId, final int propertyId, final JSONObject json) {
 		if (!"time".equals(json.opt("type")))
 			return null;
 		final JSONObject jValue = json.optJSONObject("value");
@@ -64,42 +55,6 @@ public class DClaimTime extends DClaim {
 			System.out.println("Q" + itemId + " P" + propertyId + ": year " + year + " out of range for database");
 			return null;
 		}
-		return new DClaimTime(itemId, propertyId, value.toLocalDate(), precision);
-	}
-
-	// ---------------------------------------------------------------------------------------------------------------- sql
-
-	private static final String SQL_INSERT = "INSERT INTO claim_time (item_id, property_id, value, precision) VALUES (?, ?, to_date(?, 'YYYY-MM-DD'), ?)";
-
-	private static PreparedStatement psInsert;
-	private static int psInsertIdx;
-
-	@Override
-	public boolean insert(final Connection cn) {
-		try {
-			if (psInsert == null || psInsert.isClosed()) {
-				psInsert = cn.prepareStatement(SQL_INSERT);
-				psInsertIdx = 0;
-			}
-			psInsert.setInt(1, itemId());
-			psInsert.setInt(2, propertyId());
-			psInsert.setString(3, value.format(DateTimeFormatter.ISO_LOCAL_DATE));
-			psInsert.setShort(4, precision);
-			psInsert.addBatch();
-			if (psInsertIdx > MAX_BATCH_COUNT) {
-				psInsert.executeBatch();
-				psInsertIdx = 0;
-			} else {
-				psInsertIdx++;
-			}
-		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-		return true;
-	}
-
-	public static boolean insertClose() {
-		return psClose(psInsert);
+		return new ClaimTimeEntity(itemId, propertyId, value.toLocalDate(), precision);
 	}
 }

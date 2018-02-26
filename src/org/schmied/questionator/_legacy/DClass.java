@@ -5,11 +5,12 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.schmied.questionator.*;
+import org.schmied.questionator.Questionator;
+import org.schmied.questionator.importer.entity.ImportEntity;
 
 @SuppressWarnings("all")
 @Deprecated
-public class DClass extends DEntity implements Comparable<Object> {
+public class DClass extends ImportEntity implements Comparable<Object> {
 
 	public static final int DEBUG_ID = -1;
 

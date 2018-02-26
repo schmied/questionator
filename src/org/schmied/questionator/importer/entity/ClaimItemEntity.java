@@ -1,26 +1,24 @@
-package org.schmied.questionator;
+package org.schmied.questionator.importer.entity;
 
 import java.sql.*;
 import java.util.*;
 
 import org.json.JSONObject;
+import org.schmied.questionator.Questionator;
+import org.schmied.questionator.importer.db.InsertDatabase;
 
-public class DClaimItem extends DClaim {
+public class ClaimItemEntity extends ClaimEntity {
 
-	private final int value;
+	public final int value;
 
-	public DClaimItem(final int itemId, final int propertyId, final int value) {
+	public ClaimItemEntity(final int itemId, final int propertyId, final int value) {
 		super(itemId, propertyId);
 		this.value = value;
 	}
 
-	public final int value() {
-		return value;
-	}
-
 	// ---------------------------------------------------------------------------------------------------------------- json
 
-	public static DClaimItem claim(final int itemId, final int propertyId, final JSONObject json) {
+	public static ClaimItemEntity claim(final int itemId, final int propertyId, final JSONObject json) {
 		if (!"wikibase-entityid".equals(json.opt("type")))
 			return null;
 		final JSONObject jValue = json.optJSONObject("value");
@@ -31,45 +29,10 @@ public class DClaimItem extends DClaim {
 		final int value = jValue.optInt("numeric-id", -1);
 		if (value < 0)
 			return null;
-		return new DClaimItem(itemId, propertyId, value);
+		return new ClaimItemEntity(itemId, propertyId, value);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------- sql
-
-	private static final String SQL_INSERT = "INSERT INTO claim_item (item_id, property_id, value) VALUES (?, ?, ?)";
-
-	private static PreparedStatement psInsert;
-	private static int psInsertIdx;
-
-	@Override
-	public boolean insert(final Connection cn) {
-		if (itemId() == value) // XXX ???
-			return false;
-		try {
-			if (psInsert == null || psInsert.isClosed()) {
-				psInsert = cn.prepareStatement(SQL_INSERT);
-				psInsertIdx = 0;
-			}
-			psInsert.setInt(1, itemId());
-			psInsert.setInt(2, propertyId());
-			psInsert.setInt(3, value);
-			psInsert.addBatch();
-			if (psInsertIdx > MAX_BATCH_COUNT) {
-				psInsert.executeBatch();
-				psInsertIdx = 0;
-			} else {
-				psInsertIdx++;
-			}
-		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-		return true;
-	}
-
-	public static boolean insertClose() {
-		return psClose(psInsert);
-	}
 
 	public static boolean deleteInvalid(final Connection cn) {
 		final long ticks = System.currentTimeMillis();
@@ -103,7 +66,7 @@ public class DClaimItem extends DClaim {
 				psDeleteClaim.setInt(1, invalidClaim[0].intValue());
 				psDeleteClaim.setInt(2, invalidClaim[1].intValue());
 				psDeleteClaim.addBatch();
-				if (idx % MAX_BATCH_COUNT == 0 && idx > 0) {
+				if (idx % InsertDatabase.CAPACITY == 0 && idx > 0) {
 					psDeleteClaim.executeBatch();
 					//System.out.println(idx + " / " + invalidClaims.size() + " " + invalidClaim[0].intValue() + " " + invalidClaim[1].intValue());
 				}

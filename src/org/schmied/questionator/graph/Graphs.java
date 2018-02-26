@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.schmied.questionator.*;
+import org.schmied.questionator.importer.entity.ClaimEntity;
 
 public class Graphs {
 
@@ -50,7 +51,7 @@ public class Graphs {
 		final int[] ids = Questionator.intArray(leafNodes.stream().map(l -> Integer.valueOf(l.itemId)).collect(Collectors.toList()));
 		if (ids == null)
 			return null;
-		return db.filter(ids, "item", "item_id", "popularity < " + DClaim.MIN_POPULARITY_CNT);
+		return db.filter(ids, "item", "item_id", "popularity < " + ClaimEntity.MIN_POPULARITY_CNT);
 	}
 
 	public SortedSet<Integer> reduceValidateDelete(final Connection cn, final int[] unpopularItemIds) {

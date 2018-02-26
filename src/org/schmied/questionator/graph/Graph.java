@@ -5,6 +5,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.schmied.questionator.*;
+import org.schmied.questionator.importer.db.InsertDatabase;
+import org.schmied.questionator.importer.entity.ImportEntity;
 
 public class Graph {
 
@@ -48,9 +50,10 @@ public class Graph {
 		final SortedMap<Integer, Node> unconnectedNodes = new TreeMap<>();
 		int idx = 0;
 		while (idx < itemIds.length) {
-			final List<Integer> bucket = DEntity.sqlBucket(itemIds, idx);
+			final List<Integer> bucket = ImportEntity.sqlBucket(itemIds, idx);
 			idx += bucket.size();
-			try (final Statement st = cn.createStatement(); final ResultSet rs = DEntity.sqlBucketResultSet(bucket, st, "item_id, label_en", "item", "item_id", null)) {
+			try (final Statement st = cn.createStatement();
+					final ResultSet rs = ImportEntity.sqlBucketResultSet(bucket, st, "item_id, label_en", "item", "item_id", null)) {
 				while (rs.next()) {
 					final Integer itemId = Integer.valueOf(rs.getInt(1));
 					unconnectedNodes.put(itemId, new Node(itemId.intValue(), rs.getString(2)));
@@ -74,10 +77,11 @@ public class Graph {
 		final int[] itemIds = Questionator.intArray(nodes.keySet());
 		int idx = 0;
 		while (idx < itemIds.length) {
-			final List<Integer> bucket = DEntity.sqlBucket(itemIds, idx);
+			final List<Integer> bucket = ImportEntity.sqlBucket(itemIds, idx);
 			idx += bucket.size();
 			try (final Statement st = cn.createStatement();
-					final ResultSet rs = DEntity.sqlBucketResultSet(bucket, st, "item_id, value", "claim_item", "property_id = " + propertyId + " AND item_id", null)) {
+					final ResultSet rs = ImportEntity.sqlBucketResultSet(bucket, st, "item_id, value", "claim_item", "property_id = " + propertyId + " AND item_id",
+							null)) {
 				while (rs.next()) {
 					final Integer childId = Integer.valueOf(rs.getInt(1));
 					final Node child = nodes.get(childId);
@@ -146,7 +150,7 @@ public class Graph {
 						ps.setInt(1, child.itemId);
 						ps.setInt(2, parent.itemId);
 						ps.addBatch();
-						if (idx > DEntity.MAX_BATCH_COUNT) {
+						if (idx > InsertDatabase.CAPACITY) {
 							ps.executeBatch();
 							idx = 0;
 						} else {
@@ -180,7 +184,7 @@ public class Graph {
 							ps.setInt(1, childId);
 							ps.setInt(2, parent.itemId);
 							ps.addBatch();
-							if (idx > DEntity.MAX_BATCH_COUNT) {
+							if (idx > InsertDatabase.CAPACITY) {
 								ps.executeBatch();
 								idx = 0;
 							} else {

@@ -1,16 +1,16 @@
 package org.schmied.questionator;
 
-import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
 
-import org.schmied.questionator.graph.*;
+import org.schmied.questionator.importer.Importer;
 
 public class Questionator {
 
 	private static final String DB_URL = "jdbc:postgresql://localhost/questionator_test?user=postgres&password=postgres";
 //	private static final String DB_URL = "jdbc:postgresql://localhost/questionator_old?user=postgres&password=postgres";
-	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-20180115-all.json.bz2";
+//	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-20180115-all.json.bz2";
+	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-20180115-all.json";
 //	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-test.json";
 
 	private final Connection connection;
@@ -42,36 +42,6 @@ public class Questionator {
 		}
 	}
 
-	private static boolean importAll(final Connection cn) {
-
-		if (!DProperty.importProperties(cn))
-			return false;
-		final Path file = Paths.get(DUMP_FILE);
-		if (!DItem.importItems(file, cn))
-			return false;
-		if (!DItem.reduceItems(cn))
-			return false;
-		if (!DClaimItem.deleteRedundant(cn))
-			return false;
-
-////		if (!DClass.initClasses(cn))
-////			return false;
-
-////		Topic.topics();
-
-		final Graphs graphs = new Graphs();
-		for (final Graph graph : graphs.graphs().values()) {
-			System.out.println("PROPERTY " + graph.propertyId);
-			for (final Node rootNode : graph.rootNodes(cn)) {
-				System.out.println(rootNode.description());
-			}
-		}
-
-////		DItem.clean(cn, graphs);
-
-		return true;
-	}
-
 	public static final int[] intArray(final Collection<? extends Number> c) {
 		if (c == null)
 			return null;
@@ -91,7 +61,7 @@ public class Questionator {
 		if (q == null)
 			return;
 
-		importAll(q.connection);
+		Importer.importInsert(q.connection, DUMP_FILE);
 
 		q.close();
 	}

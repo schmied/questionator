@@ -1,27 +1,13 @@
-package org.schmied.questionator;
+package org.schmied.questionator.importer.entity;
 
 import java.sql.*;
 import java.util.*;
 
-public class DEntity {
+import org.schmied.questionator.Questionator;
 
-	public static final int MAX_BATCH_COUNT = 100;
-	public static final int MAX_STRING_LENGTH = 100;
+public abstract class ImportEntity {
 
-	@SuppressWarnings("all")
-	public static final String validString(String s) {
-		if (s == null)
-			return null;
-		s = s.trim();
-		if (s.isEmpty())
-			return null;
-		if (s.length() > MAX_STRING_LENGTH) {
-			if (s.length() > 2 * MAX_STRING_LENGTH)
-				return null;
-			s = s.substring(0, MAX_STRING_LENGTH);
-		}
-		return s;
-	}
+//	public static final int MAX_BATCH_COUNT = 100;
 
 	public static int[] validIds(final Connection cn, final String table) {
 		final List<Integer> idList = new ArrayList<>();
