@@ -7,36 +7,17 @@ import org.schmied.questionator.Questionator;
 
 public abstract class ImportEntity {
 
-//	public static final int MAX_BATCH_COUNT = 100;
-
 	public static int[] validIds(final Connection cn, final String table) {
 		final List<Integer> idList = new ArrayList<>();
 		try (final Statement st = cn.createStatement(); final ResultSet rs = st.executeQuery("SELECT " + table + "_id FROM " + table)) {
 			while (rs.next())
 				idList.add(Integer.valueOf(rs.getInt(1)));
-//			rs.close();
-//			st.close();
 		} catch (final SQLException e) {
 			e.printStackTrace();
 			return null;
 		}
 		final int[] validIds = Questionator.intArray(idList);
 		return validIds;
-	}
-
-	public static boolean psClose(final PreparedStatement ps) {
-		if (ps == null)
-			return true;
-		try {
-			if (ps.isClosed())
-				return true;
-			ps.executeBatch();
-			ps.close();
-		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-		return true;
 	}
 
 	public static final List<Integer> sqlBucket(final List<Integer> list, int idx) {

@@ -17,16 +17,6 @@ public abstract class ClaimEntity extends ImportEntity {
 		this.propertyId = propertyId;
 	}
 
-/*
-	public final int itemId() {
-		return itemId;
-	}
-
-	public final int propertyId() {
-		return propertyId;
-	}
-*/
-
 	// ---------------------------------------------------------------------------------------------------------------- json
 
 	private static ClaimEntity claim(final int itemId, final int propertyId, final Object o) {

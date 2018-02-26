@@ -27,24 +27,16 @@ public class ClaimTimeEntity extends ClaimEntity {
 		String time = jValue.optString("time");
 		if (time == null)
 			return null;
-//		final char firstChar = time.charAt(0);
-//		if (!Character.isDigit(firstChar))
-//			time = time.substring(1);
-//		time = time.replace("-00", "-01");
 		time = time.replaceAll("^\\+", "");
 		final short precision = (short) jValue.optInt("precision", 11);
 		LocalDateTime value = null;
 		try {
 			value = LocalDateTime.parse(time, DateTimeFormatter.ISO_ZONED_DATE_TIME);
-//			value = LocalDateTime.parse(time, DateTimeFormatter.ISO_INSTANT);
 		} catch (final Exception e1) {
-			//System.out.println("Q" + itemId + " P" + propertyId + ": Cannot parse date time " + time);
 			try {
 				final int year = Integer.parseInt(time.split("-\\d\\d-")[0]);
-				//System.out.println("Q" + itemId + " P" + propertyId + ": extract year " + year);
 				value = LocalDateTime.of(year, 1, 1, 0, 0);
 			} catch (final Exception e2) {
-//				e2.printStackTrace();
 				System.out.println(
 						"Q" + itemId + " P" + propertyId + ": Cannot parse year from " + time + " (" + e2.getClass().getSimpleName() + ": " + e2.getMessage() + ")");
 				return null;
