@@ -34,10 +34,10 @@ public class ClaimItemEntity extends ClaimEntity {
 
 	// ---------------------------------------------------------------------------------------------------------------- sql
 
-	public static boolean deleteInvalid(final Connection cn) {
+	public static boolean deleteInvalidReferences(final Connection cn) {
 		final long ticks = System.currentTimeMillis();
 
-		final List<Integer> itemIdList = new ArrayList<>();
+		final List<Integer> itemIdList = new ArrayList<>(1024 * 1024);
 		try (final Statement st = cn.createStatement(); final ResultSet rs = st.executeQuery("SELECT item_id FROM item")) {
 			while (rs.next())
 				itemIdList.add(Integer.valueOf(rs.getInt(1)));

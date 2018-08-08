@@ -104,7 +104,7 @@ public abstract class ImporterDatabase extends Database {
 		}
 		if (cntFlush > 0) {
 			final long elapsed = System.currentTimeMillis() - ticks;
-			System.out.println("flush " + cntFlush + " in " + elapsed + "ms (" + Math.round(1000.0 * cntFlush / elapsed) + "rows/s)");
+			System.out.println("flush " + cntFlush + " in " + elapsed + "ms (" + Math.round(1000.0 * cntFlush / elapsed) + " rows/s)");
 		}
 		return true;
 	}
@@ -152,9 +152,9 @@ public abstract class ImporterDatabase extends Database {
 			st.execute("DROP TABLE IF EXISTS item");
 			st.execute("DROP TABLE IF EXISTS property");
 			// create
-			st.execute("CREATE TABLE IF NOT EXISTS property (property_id INT4 PRIMARY KEY, label_en character varying(" + MAX_STRING_LENGTH
-					+ "), label_de character varying(" + MAX_STRING_LENGTH + "))");
-			st.execute("CREATE TABLE IF NOT EXISTS item (item_id INT4 NOT NULL, popularity SMALLINT, label_en CHARACTER VARYING(" + MAX_STRING_LENGTH
+			st.execute("CREATE TABLE IF NOT EXISTS property       (property_id INT4 PRIMARY KEY, label_en character varying(" + MAX_STRING_LENGTH
+					+ ") NOT NULL, label_de character varying(" + MAX_STRING_LENGTH + ") NOT NULL)");
+			st.execute("CREATE TABLE IF NOT EXISTS item           (item_id INT4, popularity SMALLINT, label_en CHARACTER VARYING(" + MAX_STRING_LENGTH
 					+ "), label_de CHARACTER VARYING(" + MAX_STRING_LENGTH + "))");
 			st.execute("CREATE TABLE IF NOT EXISTS claim_geo      (item_id INT4, property_id INT4, lat REAL, lng REAL)");
 			st.execute("CREATE TABLE IF NOT EXISTS claim_item     (item_id INT4, property_id INT4, value INT4)");
@@ -172,8 +172,8 @@ public abstract class ImporterDatabase extends Database {
 		final long ticksIndex = System.currentTimeMillis();
 		try (final Statement st = connection().createStatement()) {
 			st.execute("ALTER TABLE item ADD CONSTRAINT pk_item_item_id PRIMARY KEY (item_id)");
-			st.execute("CREATE INDEX idx_item_label_en ON item USING btree (label_en)");
-			st.execute("CREATE INDEX idx_item_label_de ON item USING btree (label_de)");
+			st.execute("CREATE INDEX idx_item_label_en              ON item           USING btree (label_en)");
+			st.execute("CREATE INDEX idx_item_label_de              ON item           USING btree (label_de)");
 			st.execute("CREATE INDEX idx_claim_geo_item_id          ON claim_geo      USING btree (item_id)");
 			st.execute("CREATE INDEX idx_claim_geo_property_id      ON claim_geo      USING btree (property_id)");
 			st.execute("CREATE INDEX idx_claim_item_item_id         ON claim_item     USING btree (item_id)");

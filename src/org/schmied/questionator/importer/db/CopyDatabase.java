@@ -11,7 +11,7 @@ import org.schmied.questionator.importer.entity.*;
 
 public class CopyDatabase extends ImporterDatabase {
 
-	private static final int CAPACITY = 64 * 1024;
+	private static final int CAPACITY = 256 * 1024;
 
 	private final CopyManager copyManager;
 

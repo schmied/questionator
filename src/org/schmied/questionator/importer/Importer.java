@@ -7,13 +7,13 @@ import java.time.LocalTime;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.json.JSONObject;
-import org.schmied.questionator.graph.*;
 import org.schmied.questionator.importer.db.*;
 import org.schmied.questionator.importer.entity.*;
 
 public abstract class Importer {
 
-	private static final int MAX_ITEMS = 51000000;
+	private static final int MAX_ITEMS = 57000000;
+	//private static final int MAX_ITEMS = 100000;
 
 	public static boolean importInsert(final Connection cn, final String file) {
 		try {
@@ -60,11 +60,14 @@ public abstract class Importer {
 
 			br.readLine(); // first line cannot be importet
 
-			for (int countRead = 0; countRead < MAX_ITEMS; countRead++) {
+			int countRead = 0;
+			for (;;) {
 				try {
 					final JSONObject json = readLine(br);
-					if (json == null) {
-						System.out.println(countRead + " lines read.");
+					if (json == null || countRead > MAX_ITEMS) {
+						final long secondsElapsed = (System.currentTimeMillis() - ticks) / 1000;
+						System.out.println(countImported + " / " + countRead + " " + (Math.round(100.0 * countImported / countRead)) + "% in "
+								+ LocalTime.ofSecondOfDay(secondsElapsed).toString() + ", " + Math.round((double) countRead / secondsElapsed) + " items/s");
 						break;
 					}
 					final ItemEntity item = ItemEntity.item(json);
@@ -87,6 +90,7 @@ public abstract class Importer {
 							+ LocalTime.ofSecondOfDay(secondsElapsed).toString() + ", " + Math.round((double) countRead / secondsElapsed) + " items/s, ETA "
 							+ (secondsEta > 86000 ? ">1d (" + Math.round(secondsEta / 60.0f / 60.0f) + "h)" : LocalTime.ofSecondOfDay(secondsEta).toString()));
 				}
+				countRead++;
 			}
 
 			db.closeImport();
@@ -110,8 +114,10 @@ public abstract class Importer {
 	}
 
 	private static boolean importBzipFile(final ImporterDatabase db, final Path file) {
-		try (final InputStream is = Files.newInputStream(file); final BZip2CompressorInputStream bz = new BZip2CompressorInputStream(is)) {
-			if (!importStream(db, bz))
+		try (final InputStream is = Files.newInputStream(file);
+				final BufferedInputStream bis = new BufferedInputStream(is, 16 * 1024);
+				final BZip2CompressorInputStream bzis = new BZip2CompressorInputStream(bis)) {
+			if (!importStream(db, bzis))
 				return false;
 		} catch (final IOException e) {
 			e.printStackTrace();
@@ -136,7 +142,7 @@ public abstract class Importer {
 		if (!db.createIndexes())
 			return false;
 
-		ClaimItemEntity.deleteInvalid(db.connection());
+		ClaimItemEntity.deleteInvalidReferences(db.connection());
 
 		if (!db.addConstraints())
 			return false;
@@ -158,23 +164,23 @@ public abstract class Importer {
 			return false;
 		if (!importFile(db, path))
 			return false;
-		if (!ItemEntity.reduceItems(db.connection()))
-			return false;
-		if (!ClaimItemEntity.deleteRedundant(db.connection()))
-			return false;
+//		if (!ItemEntity.reduceItems(db.connection()))
+//			return false;
+//		if (!ClaimItemEntity.deleteRedundant(db.connection()))
+//			return false;
 
 ////		if (!DClass.initClasses(cn))
 ////			return false;
 
 ////		Topic.topics();
 
-		final Graphs graphs = new Graphs();
-		for (final Graph graph : graphs.graphs().values()) {
-			System.out.println("PROPERTY " + graph.propertyId);
-			for (final Node rootNode : graph.rootNodes(db.connection())) {
-				System.out.println(rootNode.description());
-			}
-		}
+//		final Graphs graphs = new Graphs();
+//		for (final Graph graph : graphs.graphs().values()) {
+//			System.out.println("PROPERTY " + graph.propertyId);
+//			for (final Node rootNode : graph.rootNodes(db.connection())) {
+//				System.out.println(rootNode.description());
+//			}
+//		}
 
 ////		DItem.clean(cn, graphs);
 

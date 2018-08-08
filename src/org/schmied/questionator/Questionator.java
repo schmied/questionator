@@ -7,11 +7,8 @@ import org.schmied.questionator.importer.Importer;
 
 public class Questionator {
 
-	private static final String DB_URL = "jdbc:postgresql://localhost/questionator_test?user=postgres&password=postgres";
-//	private static final String DB_URL = "jdbc:postgresql://localhost/questionator_old?user=postgres&password=postgres";
-//	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-20180115-all.json.bz2";
-	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-20180115-all.json";
-//	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/wikidata-test.json";
+	private static final String DB_URL = "jdbc:postgresql://localhost/questionator?user=postgres&password=postgres";
+	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/latest-all.json.bz2";
 
 	private final Connection connection;
 
