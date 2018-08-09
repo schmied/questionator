@@ -14,7 +14,7 @@ public class CopyDatabase extends ImporterDatabase {
 
 	private static final int CAPACITY = 256 * 1024;
 
-	private static final Pattern PATTERN_JUNK = Pattern.compile("[^a-zA-Z0-9äöüÄÖÜß -]");
+	private static final Pattern PATTERN_JUNK = Pattern.compile("[^a-zA-Z0-9ßäëïöüáćéíóśúýźàèìòùâêîôûčğřšžãñõåçşąęłøðæœıÄËÏÖÜÁĆÉÍÓŚÚÝŹÀÈÌÒÙÂÊÎÔÛČĞŘŠŽÃÑÕÅÇŞĄĘŁØÐÆŒ -]");
 	private static final Pattern PATTERN_WHITESPACES = Pattern.compile("\\s+");
 	private static final Pattern PATTERN_DATE = Pattern.compile("^\\d+-\\d\\d?-\\d\\d?$");
 
@@ -116,7 +116,11 @@ public class CopyDatabase extends ImporterDatabase {
 			sb.append('\t');
 			sb.append(e.propertyId);
 			sb.append('\t');
-			sb.append(PATTERN_WHITESPACES.matcher(PATTERN_JUNK.matcher(e.value.replace("'", "")).replaceAll(" ")).replaceAll(" ").trim());
+			String value = e.value;
+			// 18 image, 41 flag image, 94 coat of arms image, 154 logo image
+			if (e.propertyId != 18 && e.propertyId != 41 && e.propertyId != 94 && e.propertyId != 154)
+				value = PATTERN_WHITESPACES.matcher(PATTERN_JUNK.matcher(value.replace("'", "")).replaceAll(" ")).replaceAll(" ").trim();
+			sb.append(value);
 			sb.append('\n');
 		}
 		try (final StringReader sr = new StringReader(sb.toString())) {

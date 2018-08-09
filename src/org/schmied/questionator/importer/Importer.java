@@ -13,8 +13,8 @@ import org.schmied.questionator.importer.entity.*;
 
 public abstract class Importer {
 
-	private static final int MAX_ITEMS = 57000000;
-	//private static final int MAX_ITEMS = 10000;
+	//private static final int MAX_ITEMS = 57000000;
+	private static final int MAX_ITEMS = 10000;
 
 	private static final int BUFFER_SIZE_READER = 16 * 1024;
 	private static final int BUFFER_SIZE_STREAM = 16 * 1024;
@@ -123,7 +123,6 @@ public abstract class Importer {
 	}
 
 	private static void importFile(final ImporterDatabase db, final Path file) throws Exception {
-
 		if (file.getFileName().toString().toLowerCase().endsWith(".bz2")) {
 			importBzipFile(db, file);
 		} else if (file.getFileName().toString().toLowerCase().endsWith(".json")) {
@@ -131,10 +130,6 @@ public abstract class Importer {
 		} else {
 			throw new Exception("unrecognized file format: " + file.getFileName().toString());
 		}
-
-		db.createIndexes();
-		ClaimItemEntity.deleteInvalidReferences(db.connection());
-		db.addConstraints();
 	}
 
 	private static boolean importAll(final ImporterDatabase db, final String file) {
@@ -149,6 +144,9 @@ public abstract class Importer {
 			db.recreateTables();
 			db.insertProperties();
 			importFile(db, path);
+			db.createIndexes();
+			ClaimItemEntity.deleteInvalidReferences(db.connection());
+			db.addConstraints();
 		} catch (final Exception e) {
 			e.printStackTrace();
 			return false;
