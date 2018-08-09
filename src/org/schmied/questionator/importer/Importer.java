@@ -13,8 +13,8 @@ import org.schmied.questionator.importer.entity.*;
 
 public abstract class Importer {
 
-	//private static final int MAX_ITEMS = 57000000;
-	private static final int MAX_ITEMS = 10000;
+	private static final int MAX_ITEMS = 57000000;
+	//private static final int MAX_ITEMS = 100000;
 
 	private static final int BUFFER_SIZE_READER = 16 * 1024;
 	private static final int BUFFER_SIZE_STREAM = 16 * 1024;
