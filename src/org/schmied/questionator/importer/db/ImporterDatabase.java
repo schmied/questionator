@@ -8,19 +8,19 @@ import org.schmied.questionator.importer.entity.*;
 
 public abstract class ImporterDatabase extends Database {
 
-	protected abstract boolean flushItems(final List<ItemEntity> entities) throws Exception;
+	protected abstract void flushItems(final List<ItemEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsGeo(final List<ClaimGeoEntity> entities) throws Exception;
+	protected abstract void flushClaimsGeo(final List<ClaimGeoEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsItem(final List<ClaimItemEntity> entities) throws Exception;
+	protected abstract void flushClaimsItem(final List<ClaimItemEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsQuantity(final List<ClaimQuantityEntity> entities) throws Exception;
+	protected abstract void flushClaimsQuantity(final List<ClaimQuantityEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsString(final List<ClaimStringEntity> entities) throws Exception;
+	protected abstract void flushClaimsString(final List<ClaimStringEntity> entities) throws Exception;
 
-	protected abstract boolean flushClaimsTime(final List<ClaimTimeEntity> entities) throws Exception;
+	protected abstract void flushClaimsTime(final List<ClaimTimeEntity> entities) throws Exception;
 
-	protected abstract boolean closeImportResources();
+	protected abstract void closeImportResources();
 
 	// ---
 
@@ -46,70 +46,58 @@ public abstract class ImporterDatabase extends Database {
 		claimsTime = new ArrayList<>(capacity + CLAIM_CAPACITY_BUFFER);
 	}
 
-	private boolean flush(final int maxCapacity) {
+	private void flush(final int maxCapacity) throws Exception {
 		final long ticks = System.currentTimeMillis();
 		int cntFlush = 0;
-		try {
-			if (items.size() >= maxCapacity) {
-				if (!flushItems(items))
-					return false;
-				cntFlush += items.size();
-				items.clear();
-				if (maxCapacity > 0)
-					items.ensureCapacity(maxCapacity);
-			}
-			if (claimsGeo.size() >= maxCapacity) {
-				if (!flushClaimsGeo(claimsGeo))
-					return false;
-				cntFlush += claimsGeo.size();
-				claimsGeo.clear();
-				if (maxCapacity > 0)
-					claimsGeo.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
-			}
-			if (claimsItem.size() >= maxCapacity) {
-				if (!flushClaimsItem(claimsItem))
-					return false;
-				cntFlush += claimsItem.size();
-				claimsItem.clear();
-				if (maxCapacity > 0)
-					claimsItem.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
-			}
-			if (claimsQuantity.size() >= maxCapacity) {
-				if (!flushClaimsQuantity(claimsQuantity))
-					return false;
-				cntFlush += claimsQuantity.size();
-				claimsQuantity.clear();
-				if (maxCapacity > 0)
-					claimsQuantity.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
-			}
-			if (claimsString.size() >= maxCapacity) {
-				if (!flushClaimsString(claimsString))
-					return false;
-				cntFlush += claimsQuantity.size();
-				claimsString.clear();
-				if (maxCapacity > 0)
-					claimsString.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
-			}
-			if (claimsTime.size() >= maxCapacity) {
-				if (!flushClaimsTime(claimsTime))
-					return false;
-				cntFlush += claimsTime.size();
-				claimsTime.clear();
-				if (maxCapacity > 0)
-					claimsTime.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
-			}
-		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+		if (items.size() >= maxCapacity) {
+			flushItems(items);
+			cntFlush += items.size();
+			items.clear();
+			if (maxCapacity > 0)
+				items.ensureCapacity(maxCapacity);
+		}
+		if (claimsGeo.size() >= maxCapacity) {
+			flushClaimsGeo(claimsGeo);
+			cntFlush += claimsGeo.size();
+			claimsGeo.clear();
+			if (maxCapacity > 0)
+				claimsGeo.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
+		}
+		if (claimsItem.size() >= maxCapacity) {
+			flushClaimsItem(claimsItem);
+			cntFlush += claimsItem.size();
+			claimsItem.clear();
+			if (maxCapacity > 0)
+				claimsItem.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
+		}
+		if (claimsQuantity.size() >= maxCapacity) {
+			flushClaimsQuantity(claimsQuantity);
+			cntFlush += claimsQuantity.size();
+			claimsQuantity.clear();
+			if (maxCapacity > 0)
+				claimsQuantity.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
+		}
+		if (claimsString.size() >= maxCapacity) {
+			flushClaimsString(claimsString);
+			cntFlush += claimsQuantity.size();
+			claimsString.clear();
+			if (maxCapacity > 0)
+				claimsString.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
+		}
+		if (claimsTime.size() >= maxCapacity) {
+			flushClaimsTime(claimsTime);
+			cntFlush += claimsTime.size();
+			claimsTime.clear();
+			if (maxCapacity > 0)
+				claimsTime.ensureCapacity(maxCapacity + CLAIM_CAPACITY_BUFFER);
 		}
 		if (cntFlush > 0) {
 			final long elapsed = System.currentTimeMillis() - ticks;
-			System.out.println("flush " + cntFlush + " in " + elapsed + "ms (" + Math.round(1000.0 * cntFlush / elapsed) + " rows/s)");
+			System.out.println("flush " + cntFlush + " in " + elapsed + " ms (" + Math.round(1000.0 * cntFlush / elapsed) + " rows/s)");
 		}
-		return true;
 	}
 
-	public boolean addItem(final ItemEntity item) {
+	public boolean addItem(final ItemEntity item) throws Exception {
 
 		for (final ClaimEntity c : item.claims) {
 			if (c instanceof ClaimItemEntity)
@@ -131,17 +119,23 @@ public abstract class ImporterDatabase extends Database {
 
 		items.add(item);
 
-		return flush(capacity);
+		flush(capacity);
+
+		return true;
 	}
 
-	public boolean closeImport() {
-		flush(0);
-		return closeImportResources();
+	public void closeImport() {
+		try {
+			flush(0);
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
+		closeImportResources();
 	}
 
 	// ---
 
-	public boolean recreateTables() {
+	public void recreateTables() throws Exception {
 		try (final Statement st = connection().createStatement()) {
 			// drop
 			st.execute("DROP TABLE IF EXISTS claim_geo");
@@ -162,13 +156,11 @@ public abstract class ImporterDatabase extends Database {
 			st.execute("CREATE TABLE IF NOT EXISTS claim_string   (item_id INT4, property_id INT4, value CHARACTER VARYING(" + MAX_STRING_LENGTH + "))");
 			st.execute("CREATE TABLE IF NOT EXISTS claim_time     (item_id INT4, property_id INT4, value DATE, precision SMALLINT)");
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
-		return true;
 	}
 
-	public boolean createIndexes() {
+	public void createIndexes() throws Exception {
 		final long ticksIndex = System.currentTimeMillis();
 		try (final Statement st = connection().createStatement()) {
 			st.execute("ALTER TABLE item ADD CONSTRAINT pk_item_item_id PRIMARY KEY (item_id)");
@@ -187,14 +179,12 @@ public abstract class ImporterDatabase extends Database {
 			st.execute("CREATE INDEX idx_claim_time_property_id     ON claim_time     USING btree (property_id)");
 			st.execute("ANALYZE");
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
 		System.out.println("create indexes and analzye [" + (System.currentTimeMillis() - ticksIndex) + "ms]");
-		return true;
 	}
 
-	public boolean addConstraints() {
+	public void addConstraints() throws Exception {
 		final long ticksIndex = System.currentTimeMillis();
 		try (final Statement st = connection().createStatement()) {
 			st.execute("ALTER TABLE claim_geo      ADD CONSTRAINT fk_claim_geo_item_id      FOREIGN KEY (item_id) REFERENCES item (item_id)");
@@ -204,15 +194,12 @@ public abstract class ImporterDatabase extends Database {
 			st.execute("ALTER TABLE claim_string   ADD CONSTRAINT fk_claim_string_item_id   FOREIGN KEY (item_id) REFERENCES item (item_id)");
 			st.execute("ALTER TABLE claim_time     ADD CONSTRAINT fk_claim_time_item_id     FOREIGN KEY (item_id) REFERENCES item (item_id)");
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
 		System.out.println("add constraints [" + (System.currentTimeMillis() - ticksIndex) + "ms]");
-		return true;
 	}
 
-	public boolean insertProperties() {
-
+	public void insertProperties() throws Exception {
 		for (final PropertyEntity property : PropertyEntity.VALID_PROPERTIES) {
 			try (final PreparedStatement ps = connection().prepareStatement("INSERT INTO property (property_id, label_en, label_de) VALUES (?, ?, ?)")) {
 				ps.setInt(1, property.propertyId);
@@ -220,11 +207,8 @@ public abstract class ImporterDatabase extends Database {
 				ps.setString(3, property.labelDe);
 				ps.execute();
 			} catch (final SQLException e) {
-				e.printStackTrace();
-				return false;
+				throw e;
 			}
 		}
-
-		return true;
 	}
 }

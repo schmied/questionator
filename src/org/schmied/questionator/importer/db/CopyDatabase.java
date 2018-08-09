@@ -4,6 +4,7 @@ import java.io.StringReader;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.postgresql.PGConnection;
 import org.postgresql.copy.CopyManager;
@@ -13,6 +14,10 @@ public class CopyDatabase extends ImporterDatabase {
 
 	private static final int CAPACITY = 256 * 1024;
 
+	private static final Pattern PATTERN_JUNK = Pattern.compile("[^a-zA-Z0-9äöüÄÖÜß -]");
+	private static final Pattern PATTERN_WHITESPACES = Pattern.compile("\\s+");
+	private static final Pattern PATTERN_DATE = Pattern.compile("^\\d+-\\d\\d?-\\d\\d?$");
+
 	private final CopyManager copyManager;
 
 	public CopyDatabase(final Connection connection) throws SQLException {
@@ -21,34 +26,32 @@ public class CopyDatabase extends ImporterDatabase {
 	}
 
 	@Override
-	public boolean closeImportResources() {
-		return false;
+	public void closeImportResources() {
+		// nothing to clean up here
 	}
 
 	@Override
-	protected boolean flushItems(final List<ItemEntity> entities) throws Exception {
+	protected void flushItems(final List<ItemEntity> entities) throws Exception {
 		final StringBuilder sb = new StringBuilder(4 * 16 * CAPACITY);
 		for (final ItemEntity e : entities) {
 			sb.append(e.itemId);
 			sb.append('\t');
 			sb.append(e.popularity);
 			sb.append('\t');
-			sb.append(e.labelEn.replaceAll("\\s+", " "));
+			sb.append(PATTERN_WHITESPACES.matcher(PATTERN_JUNK.matcher(e.labelEn.replace("'", "")).replaceAll(" ")).replaceAll(" ").trim());
 			sb.append('\t');
-			sb.append(e.labelDe.replaceAll("\\s+", " "));
+			sb.append(PATTERN_WHITESPACES.matcher(PATTERN_JUNK.matcher(e.labelDe.replace("'", "")).replaceAll(" ")).replaceAll(" ").trim());
 			sb.append('\n');
 		}
 		try (final StringReader sr = new StringReader(sb.toString())) {
 			copyManager.copyIn("COPY item FROM STDIN", sr);
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
-		return true;
 	}
 
 	@Override
-	protected boolean flushClaimsGeo(final List<ClaimGeoEntity> entities) throws Exception {
+	protected void flushClaimsGeo(final List<ClaimGeoEntity> entities) throws Exception {
 		final StringBuilder sb = new StringBuilder(4 * 16 * CAPACITY);
 		for (final ClaimGeoEntity e : entities) {
 			sb.append(e.itemId);
@@ -63,14 +66,12 @@ public class CopyDatabase extends ImporterDatabase {
 		try (final StringReader sr = new StringReader(sb.toString())) {
 			copyManager.copyIn("COPY claim_geo FROM STDIN", sr);
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
-		return true;
 	}
 
 	@Override
-	protected boolean flushClaimsItem(final List<ClaimItemEntity> entities) throws Exception {
+	protected void flushClaimsItem(final List<ClaimItemEntity> entities) throws Exception {
 		final StringBuilder sb = new StringBuilder(4 * 16 * CAPACITY);
 		for (final ClaimItemEntity e : entities) {
 			sb.append(e.itemId);
@@ -83,14 +84,12 @@ public class CopyDatabase extends ImporterDatabase {
 		try (final StringReader sr = new StringReader(sb.toString())) {
 			copyManager.copyIn("COPY claim_item FROM STDIN", sr);
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
-		return true;
 	}
 
 	@Override
-	protected boolean flushClaimsQuantity(final List<ClaimQuantityEntity> entities) throws Exception {
+	protected void flushClaimsQuantity(final List<ClaimQuantityEntity> entities) throws Exception {
 		final StringBuilder sb = new StringBuilder(4 * 16 * CAPACITY);
 		for (final ClaimQuantityEntity e : entities) {
 			sb.append(e.itemId);
@@ -105,43 +104,48 @@ public class CopyDatabase extends ImporterDatabase {
 		try (final StringReader sr = new StringReader(sb.toString())) {
 			copyManager.copyIn("COPY claim_quantity FROM STDIN", sr);
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
-		return true;
 	}
 
 	@Override
-	protected boolean flushClaimsString(final List<ClaimStringEntity> entities) throws Exception {
+	protected void flushClaimsString(final List<ClaimStringEntity> entities) throws Exception {
 		final StringBuilder sb = new StringBuilder(4 * 16 * CAPACITY);
 		for (final ClaimStringEntity e : entities) {
 			sb.append(e.itemId);
 			sb.append('\t');
 			sb.append(e.propertyId);
 			sb.append('\t');
-			sb.append(e.value.replaceAll("\\s+", " "));
+			sb.append(PATTERN_WHITESPACES.matcher(PATTERN_JUNK.matcher(e.value.replace("'", "")).replaceAll(" ")).replaceAll(" ").trim());
 			sb.append('\n');
 		}
 		try (final StringReader sr = new StringReader(sb.toString())) {
 			copyManager.copyIn("COPY claim_string FROM STDIN", sr);
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
-		return true;
 	}
 
 	@Override
-	protected boolean flushClaimsTime(final List<ClaimTimeEntity> entities) throws Exception {
+	protected void flushClaimsTime(final List<ClaimTimeEntity> entities) throws Exception {
 		final StringBuilder sb = new StringBuilder(4 * 16 * CAPACITY);
 		for (final ClaimTimeEntity e : entities) {
+
+			String value = e.value.format(DateTimeFormatter.ISO_LOCAL_DATE);
+			final boolean isBc = value.startsWith("-");
+			if (isBc)
+				value = value.substring(1);
+			if (!PATTERN_DATE.matcher(value).matches()) {
+				System.out.println("value '" + value + "' is not a valid date.");
+				continue;
+			}
+			if (isBc)
+				value = value + " BC";
+
 			sb.append(e.itemId);
 			sb.append('\t');
 			sb.append(e.propertyId);
 			sb.append('\t');
-			String value = e.value.format(DateTimeFormatter.ISO_LOCAL_DATE);
-			if (value.startsWith("-"))
-				value = value.substring(1) + " BC";
 			sb.append(value);
 			sb.append('\t');
 			sb.append(e.precision);
@@ -150,9 +154,7 @@ public class CopyDatabase extends ImporterDatabase {
 		try (final StringReader sr = new StringReader(sb.toString())) {
 			copyManager.copyIn("COPY claim_time FROM STDIN", sr);
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
-		return true;
 	}
 }

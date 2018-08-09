@@ -23,7 +23,7 @@ public class InsertDatabase extends ImporterDatabase {
 	}
 
 	@Override
-	public boolean closeImportResources() {
+	public void closeImportResources() {
 		try {
 			psItem.close();
 			psClaimGeo.close();
@@ -33,13 +33,11 @@ public class InsertDatabase extends ImporterDatabase {
 			psClaimTime.close();
 		} catch (final SQLException e) {
 			e.printStackTrace();
-			return false;
 		}
-		return true;
 	}
 
 	@Override
-	protected boolean flushItems(final List<ItemEntity> entities) throws SQLException {
+	protected void flushItems(final List<ItemEntity> entities) throws Exception {
 		for (final ItemEntity e : entities) {
 			psItem.setInt(1, e.itemId);
 			psItem.setInt(2, e.popularity);
@@ -47,11 +45,14 @@ public class InsertDatabase extends ImporterDatabase {
 			psItem.setString(4, e.labelDe);
 			psItem.addBatch();
 		}
-		return psItem.executeBatch().length == entities.size();
+		final int length = psItem.executeBatch().length;
+		if (length != entities.size())
+			throw new Exception("insert count " + length + " does not match entity count " + entities.size());
+
 	}
 
 	@Override
-	protected boolean flushClaimsGeo(final List<ClaimGeoEntity> entities) throws SQLException {
+	protected void flushClaimsGeo(final List<ClaimGeoEntity> entities) throws Exception {
 		for (final ClaimGeoEntity e : entities) {
 			psClaimGeo.setInt(1, e.itemId);
 			psClaimGeo.setInt(2, e.propertyId);
@@ -59,22 +60,26 @@ public class InsertDatabase extends ImporterDatabase {
 			psClaimGeo.setFloat(4, e.lng);
 			psClaimGeo.addBatch();
 		}
-		return psClaimGeo.executeBatch().length == entities.size();
+		final int length = psClaimGeo.executeBatch().length;
+		if (length != entities.size())
+			throw new Exception("insert count " + length + " does not match entity count " + entities.size());
 	}
 
 	@Override
-	protected boolean flushClaimsItem(final List<ClaimItemEntity> entities) throws SQLException {
+	protected void flushClaimsItem(final List<ClaimItemEntity> entities) throws Exception {
 		for (final ClaimItemEntity e : entities) {
 			psClaimItem.setInt(1, e.itemId);
 			psClaimItem.setInt(2, e.propertyId);
 			psClaimItem.setInt(3, e.value);
 			psClaimItem.addBatch();
 		}
-		return psClaimItem.executeBatch().length == entities.size();
+		final int length = psClaimItem.executeBatch().length;
+		if (length != entities.size())
+			throw new Exception("insert count " + length + " does not match entity count " + entities.size());
 	}
 
 	@Override
-	protected boolean flushClaimsQuantity(final List<ClaimQuantityEntity> entities) throws SQLException {
+	protected void flushClaimsQuantity(final List<ClaimQuantityEntity> entities) throws Exception {
 		for (final ClaimQuantityEntity e : entities) {
 			psClaimQuantity.setInt(1, e.itemId);
 			psClaimQuantity.setInt(2, e.propertyId);
@@ -82,22 +87,26 @@ public class InsertDatabase extends ImporterDatabase {
 			psClaimQuantity.setInt(4, e.unit);
 			psClaimQuantity.addBatch();
 		}
-		return psClaimQuantity.executeBatch().length == entities.size();
+		final int length = psClaimQuantity.executeBatch().length;
+		if (length != entities.size())
+			throw new Exception("insert count " + length + " does not match entity count " + entities.size());
 	}
 
 	@Override
-	protected boolean flushClaimsString(final List<ClaimStringEntity> entities) throws SQLException {
+	protected void flushClaimsString(final List<ClaimStringEntity> entities) throws Exception {
 		for (final ClaimStringEntity e : entities) {
 			psClaimString.setInt(1, e.itemId);
 			psClaimString.setInt(2, e.propertyId);
 			psClaimString.setString(3, e.value);
 			psClaimString.addBatch();
 		}
-		return psClaimString.executeBatch().length == entities.size();
+		final int length = psClaimString.executeBatch().length;
+		if (length != entities.size())
+			throw new Exception("insert count " + length + " does not match entity count " + entities.size());
 	}
 
 	@Override
-	protected boolean flushClaimsTime(final List<ClaimTimeEntity> entities) throws SQLException {
+	protected void flushClaimsTime(final List<ClaimTimeEntity> entities) throws Exception {
 		for (final ClaimTimeEntity e : entities) {
 			psClaimTime.setInt(1, e.itemId);
 			psClaimTime.setInt(2, e.propertyId);
@@ -105,6 +114,8 @@ public class InsertDatabase extends ImporterDatabase {
 			psClaimTime.setShort(4, e.precision);
 			psClaimTime.addBatch();
 		}
-		return psClaimTime.executeBatch().length == entities.size();
+		final int length = psClaimTime.executeBatch().length;
+		if (length != entities.size())
+			throw new Exception("insert count " + length + " does not match entity count " + entities.size());
 	}
 }

@@ -1,6 +1,7 @@
 package org.schmied.questionator.importer;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.sql.*;
 import java.time.LocalTime;
@@ -13,7 +14,10 @@ import org.schmied.questionator.importer.entity.*;
 public abstract class Importer {
 
 	private static final int MAX_ITEMS = 57000000;
-	//private static final int MAX_ITEMS = 100000;
+	//private static final int MAX_ITEMS = 10000;
+
+	private static final int BUFFER_SIZE_READER = 16 * 1024;
+	private static final int BUFFER_SIZE_STREAM = 16 * 1024;
 
 	public static boolean importInsert(final Connection cn, final String file) {
 		try {
@@ -52,8 +56,8 @@ public abstract class Importer {
 		}
 	}
 
-	private static boolean importStream(final ImporterDatabase db, final InputStream is) {
-		try (final InputStreamReader isr = new InputStreamReader(is, "US-ASCII"); final BufferedReader br = new BufferedReader(isr, 16 * 1024)) {
+	private static void importStream(final ImporterDatabase db, final InputStream is) throws Exception {
+		try (final InputStreamReader isr = new InputStreamReader(is, StandardCharsets.US_ASCII); final BufferedReader br = new BufferedReader(isr, BUFFER_SIZE_READER)) {
 
 			final long ticks = System.currentTimeMillis();
 			int countImported = 0;
@@ -93,61 +97,44 @@ public abstract class Importer {
 				countRead++;
 			}
 
+		} catch (final Exception e) {
+			throw e;
+		} finally {
 			db.closeImport();
-
-		} catch (final IOException e) {
-			e.printStackTrace();
-			return false;
 		}
-		return true;
 	}
 
-	private static boolean importPlainFile(final ImporterDatabase db, final Path file) {
-		try (final InputStream is = Files.newInputStream(file)) {
-			if (!importStream(db, is))
-				return false;
-		} catch (final IOException e) {
-			e.printStackTrace();
-			return false;
+	private static void importPlainFile(final ImporterDatabase db, final Path file) throws Exception {
+		try (final InputStream is = Files.newInputStream(file); final BufferedInputStream bis = new BufferedInputStream(is, BUFFER_SIZE_STREAM)) {
+			importStream(db, bis);
+		} catch (final Exception e) {
+			throw e;
 		}
-		return true;
 	}
 
-	private static boolean importBzipFile(final ImporterDatabase db, final Path file) {
+	private static void importBzipFile(final ImporterDatabase db, final Path file) throws Exception {
 		try (final InputStream is = Files.newInputStream(file);
-				final BufferedInputStream bis = new BufferedInputStream(is, 16 * 1024);
+				final BufferedInputStream bis = new BufferedInputStream(is, BUFFER_SIZE_STREAM);
 				final BZip2CompressorInputStream bzis = new BZip2CompressorInputStream(bis)) {
-			if (!importStream(db, bzis))
-				return false;
-		} catch (final IOException e) {
-			e.printStackTrace();
-			return false;
+			importStream(db, bzis);
+		} catch (final Exception e) {
+			throw e;
 		}
-		return true;
 	}
 
-	private static boolean importFile(final ImporterDatabase db, final Path file) {
+	private static void importFile(final ImporterDatabase db, final Path file) throws Exception {
 
 		if (file.getFileName().toString().toLowerCase().endsWith(".bz2")) {
-			if (!importBzipFile(db, file))
-				return false;
+			importBzipFile(db, file);
 		} else if (file.getFileName().toString().toLowerCase().endsWith(".json")) {
-			if (!importPlainFile(db, file))
-				return false;
+			importPlainFile(db, file);
 		} else {
-			System.out.println("unrecognized file format: " + file.getFileName().toString());
-			return false;
+			throw new Exception("unrecognized file format: " + file.getFileName().toString());
 		}
 
-		if (!db.createIndexes())
-			return false;
-
+		db.createIndexes();
 		ClaimItemEntity.deleteInvalidReferences(db.connection());
-
-		if (!db.addConstraints())
-			return false;
-
-		return true;
+		db.addConstraints();
 	}
 
 	private static boolean importAll(final ImporterDatabase db, final String file) {
@@ -158,12 +145,15 @@ public abstract class Importer {
 			return false;
 		}
 
-		if (!db.recreateTables())
+		try {
+			db.recreateTables();
+			db.insertProperties();
+			importFile(db, path);
+		} catch (final Exception e) {
+			e.printStackTrace();
 			return false;
-		if (!db.insertProperties())
-			return false;
-		if (!importFile(db, path))
-			return false;
+		}
+
 //		if (!ItemEntity.reduceItems(db.connection()))
 //			return false;
 //		if (!ClaimItemEntity.deleteRedundant(db.connection()))
