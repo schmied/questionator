@@ -5,92 +5,106 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.schmied.questionator.*;
-import org.schmied.questionator.importer.db.InsertDatabase;
-import org.schmied.questionator.importer.entity.ImportEntity;
+import org.schmied.questionator.importer.entity.*;
 
 public class Graph {
 
-	public static final int DEBUG_ID = -1;
+	public static class Definition {
 
-	public final int propertyId;
+		public final int transitiveProperty;
+		public final int[] leafProperties;
 
-	private SortedMap<Integer, Node> nodes;
-	private SortedSet<Node> rootNodes, leafNodes;
+		public Definition(final int transitiveProperty, final int[] leafProperties) {
+			this.transitiveProperty = transitiveProperty;
+			this.leafProperties = leafProperties == null ? new int[] {} : leafProperties;
+		}
+	}
 
-	public Graph(final int propertyId) {
-		this.propertyId = propertyId;
+	//public static final int DEBUG_ID = -1;
+
+	//public final int propertyId;
+	public final Definition definition;
+
+	private SortedMap<Integer, Node> transitives;
+	private SortedSet<Node> rootTransitives, leafTransitives;
+
+	public Graph(final Definition definition) {
+		this.definition = definition;
 	}
 
 	private synchronized void invalidate() {
-		nodes = null;
-		rootNodes = null;
+		transitives = null;
+		rootTransitives = null;
+		leafTransitives = null;
 	}
 
-	private SortedSet<Integer> itemIds(final Connection cn) {
+	private SortedSet<Integer> transitiveIds(final Connection cn) {
 		final long ticks = System.currentTimeMillis();
-		final SortedSet<Integer> itemIds = new TreeSet<>();
-		try (final Statement st = cn.createStatement(); final ResultSet rs = st.executeQuery("SELECT item_id, value FROM claim_item WHERE property_id = " + propertyId)) {
+		final SortedSet<Integer> transitiveIds = new TreeSet<>();
+		try (final Statement st = cn.createStatement();
+				final ResultSet rs = st.executeQuery("SELECT item_id, value FROM claim_item WHERE property_id = " + definition.transitiveProperty)) {
 			while (rs.next()) {
-				itemIds.add(Integer.valueOf(rs.getInt(1)));
-				itemIds.add(Integer.valueOf(rs.getInt(2)));
+				transitiveIds.add(Integer.valueOf(rs.getInt(1)));
+				transitiveIds.add(Integer.valueOf(rs.getInt(2)));
 			}
 		} catch (final SQLException e) {
 			e.printStackTrace();
 			return null;
 		}
-		System.out.println("item ids " + propertyId + ": " + itemIds.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
+		System.out.println("transitive ids " + definition.transitiveProperty + ": " + transitiveIds.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
 //		if (DEBUG_ID > 0)
 //			System.out.println(">>> node ids contains " + DEBUG_ID + ": " + itemIds.contains(Integer.valueOf(DEBUG_ID)));
-		return itemIds;
+		return transitiveIds;
 	}
 
-	private SortedMap<Integer, Node> unconnectedNodes(final Connection cn) {
-		final int[] itemIds = Questionator.intArray(itemIds(cn));
+	private SortedMap<Integer, Node> unconnectedTransitives(final Connection cn) {
+		final int[] transitiveIds = Questionator.intArray(transitiveIds(cn));
 		final long ticks = System.currentTimeMillis();
-		final SortedMap<Integer, Node> unconnectedNodes = new TreeMap<>();
+		final SortedMap<Integer, Node> unconnectedTransitives = new TreeMap<>();
 		int idx = 0;
-		while (idx < itemIds.length) {
-			final List<Integer> bucket = ImportEntity.sqlBucket(itemIds, idx);
+		while (idx < transitiveIds.length) {
+			final List<Integer> bucket = ImportEntity.sqlBucket(transitiveIds, idx);
 			idx += bucket.size();
 			try (final Statement st = cn.createStatement();
 					final ResultSet rs = ImportEntity.sqlBucketResultSet(bucket, st, "item_id, label_en", "item", "item_id", null)) {
 				while (rs.next()) {
 					final Integer itemId = Integer.valueOf(rs.getInt(1));
-					unconnectedNodes.put(itemId, new Node(itemId.intValue(), rs.getString(2)));
+					unconnectedTransitives.put(itemId, new Node(itemId.intValue(), rs.getString(2)));
 				}
 			} catch (final SQLException e) {
 				e.printStackTrace();
 				return null;
 			}
 		}
-		System.out.println("unconnected nodes " + propertyId + ": " + unconnectedNodes.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
-		return unconnectedNodes;
+		System.out.println(
+				"unconnected transitives " + definition.transitiveProperty + ": " + unconnectedTransitives.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
+		return unconnectedTransitives;
 	}
 
-	public synchronized SortedMap<Integer, Node> nodes(final Connection cn) {
-		if (nodes != null)
-			return nodes;
+	private synchronized SortedMap<Integer, Node> transitives(final Connection cn) {
+		if (transitives != null)
+			return transitives;
 
-		nodes = unconnectedNodes(cn);
+		transitives = unconnectedTransitives(cn);
 
 		final long ticks = System.currentTimeMillis();
-		final int[] itemIds = Questionator.intArray(nodes.keySet());
+		final int[] itemIds = Questionator.intArray(transitives.keySet());
 		int idx = 0;
 		while (idx < itemIds.length) {
 			final List<Integer> bucket = ImportEntity.sqlBucket(itemIds, idx);
 			idx += bucket.size();
 			try (final Statement st = cn.createStatement();
-					final ResultSet rs = ImportEntity.sqlBucketResultSet(bucket, st, "item_id, value", "claim_item", "property_id = " + propertyId + " AND item_id",
-							null)) {
+					final ResultSet rs = ImportEntity.sqlBucketResultSet(bucket, st, "item_id, value", "claim_item",
+							"property_id = " + definition.transitiveProperty + " AND item_id", null)) {
 				while (rs.next()) {
 					final Integer childId = Integer.valueOf(rs.getInt(1));
-					final Node child = nodes.get(childId);
+					final Node child = transitives.get(childId);
 					if (child == null) {
 						System.out.println("child does not exist:" + childId);
 						continue;
 					}
 					final Integer parentId = Integer.valueOf(rs.getInt(2));
-					final Node parent = nodes.get(parentId);
+					final Node parent = transitives.get(parentId);
 					if (parent == null) {
 						System.out.println("parent does not exist:" + parentId);
 						continue;
@@ -103,30 +117,43 @@ public class Graph {
 				return null;
 			}
 		}
-		System.out.println("nodes " + propertyId + ": " + nodes.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
-		return nodes;
+		System.out.println("nodes " + definition.transitiveProperty + ": " + transitives.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
+		return transitives;
 	}
 
-	public synchronized SortedSet<Node> rootNodes(final Connection cn) {
-		if (rootNodes != null)
-			return rootNodes;
-		final Collection<Node> n = nodes(cn).values();
+	public synchronized SortedSet<Node> rootTransitives(final Connection cn) {
+		if (rootTransitives != null)
+			return rootTransitives;
+		final Collection<Node> n = transitives(cn).values();
 		final long ticks = System.currentTimeMillis();
-		rootNodes = new TreeSet<>(n.stream().filter(c -> c.parents() == null).collect(Collectors.toSet()));
-		System.out.println("root nodes " + propertyId + ": " + rootNodes.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
-		return rootNodes;
+		rootTransitives = new TreeSet<>(n.stream().filter(c -> c.parents() == null).collect(Collectors.toSet()));
+		System.out.println("root nodes " + definition.transitiveProperty + ": " + rootTransitives.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
+		return rootTransitives;
 	}
 
-	public synchronized SortedSet<Node> leafNodes(final Connection cn) {
-		if (leafNodes != null)
-			return leafNodes;
-		final Collection<Node> n = nodes(cn).values();
+	public synchronized SortedSet<Node> leafTransitives(final Connection cn) {
+		if (leafTransitives != null)
+			return leafTransitives;
+		final Collection<Node> n = transitives(cn).values();
 		final long ticks = System.currentTimeMillis();
-		leafNodes = new TreeSet<>(n.stream().filter(c -> c.children() == null).collect(Collectors.toSet()));
-		System.out.println("leaf nodes " + propertyId + ": " + leafNodes.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
-		return leafNodes;
+		leafTransitives = new TreeSet<>(n.stream().filter(c -> c.children() == null).collect(Collectors.toSet()));
+		System.out.println("leaf nodes " + definition.transitiveProperty + ": " + leafTransitives.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
+		return leafTransitives;
 	}
 
+	public int deleteUnpopularLeafTransitives(final Database db) throws Exception {
+		final SortedSet<Node> leafs = leafTransitives(db.connection());
+		final int[] ids = Questionator.intArray(leafs.stream().map(l -> Integer.valueOf(l.itemId)).collect(Collectors.toList()));
+		final int[] unpopularIds = db.whereIn("item", "item_id", "popularity < " + ClaimEntity.MIN_POPULARITY_CNT, "item_id", ids);
+		final int[] unreferencedIds = db.unreferenced(unpopularIds, null);
+		final int cnt = ItemEntity.delete(db, unreferencedIds);
+		System.out.println("delete unpopular leafes " + definition.transitiveProperty + ": leafes " + ids.length + ", unpopular " + unpopularIds.length
+				+ ", unreferenced " + unreferencedIds.length);
+		invalidate();
+		return cnt;
+	}
+
+/*
 	public boolean reduceValidateDelete(final Connection cn, final int unpopularItemId, final SortedSet<Integer> invalidItemIds) {
 		final Node deleteNode = nodes(cn).get(Integer.valueOf(unpopularItemId));
 		if (deleteNode == null)
@@ -204,4 +231,5 @@ public class Graph {
 
 		return reconnectCount;
 	}
+*/
 }

@@ -1,14 +1,14 @@
 package org.schmied.questionator.graph;
 
-import java.sql.Connection;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.schmied.questionator.*;
-import org.schmied.questionator.importer.entity.ClaimEntity;
+import org.schmied.questionator.Questionator;
+import org.schmied.questionator.graph.Graph.Definition;
 
 public class Graphs {
 
+/*
 	public static final int[] PROPERTIES = { //
 //			127, // owned by
 			131, // located in the administrative territorial entity
@@ -20,19 +20,42 @@ public class Graphs {
 	static {
 		Arrays.sort(PROPERTIES);
 	}
+*/
 
-	private final SortedMap<Integer, Graph> graphs;
+	private static enum Name {
+		LOCATED_IN_ADMINISTRATIVE_ENTITY, PARENT_TAXON, SUBCLASS_OF_INSTANCE_OF, SUBCLASS_OF_OCCUPATION, PART_OF, PARENT_ORGANIZATION
+	}
+
+	private static final SortedMap<Name, Definition> DEFINITIONS;
+	static {
+		DEFINITIONS = new TreeMap<>();
+		DEFINITIONS.put(Name.LOCATED_IN_ADMINISTRATIVE_ENTITY, new Definition(131, null));
+		DEFINITIONS.put(Name.PARENT_TAXON, new Definition(171, null));
+		DEFINITIONS.put(Name.SUBCLASS_OF_INSTANCE_OF, new Definition(279, new int[] { 31 }));
+		DEFINITIONS.put(Name.SUBCLASS_OF_OCCUPATION, new Definition(279, new int[] { 106 }));
+		DEFINITIONS.put(Name.PART_OF, new Definition(361, null));
+		DEFINITIONS.put(Name.PARENT_ORGANIZATION, new Definition(749, null));
+	}
+
+	public static final int[] TRANSITIVE_PROPERTIES;
+	static {
+		final Set<Integer> props = DEFINITIONS.values().stream().map(d -> Integer.valueOf(d.transitiveProperty)).collect(Collectors.toSet());
+		TRANSITIVE_PROPERTIES = Questionator.intArray(props);
+	}
+
+	private final SortedMap<Name, Graph> graphs;
 
 	public Graphs() {
 		graphs = new TreeMap<>();
-		for (final int p : PROPERTIES)
-			graphs.put(Integer.valueOf(p), new Graph(p));
+		for (final Name name : Name.values())
+			graphs.put(name, new Graph(DEFINITIONS.get(name)));
 	}
 
-	public SortedMap<Integer, Graph> graphs() {
+	public SortedMap<Name, Graph> graphs() {
 		return graphs;
 	}
 
+/*
 	public Graph graph(final int property) {
 		return graphs.get(Integer.valueOf(property));
 	}
@@ -40,20 +63,9 @@ public class Graphs {
 	public Graph graph(final Integer property) {
 		return graphs.get(property);
 	}
+*/
 
-	public int[] unpopularLeafIds(final Database db, final int property) {
-		final Graph graph = graph(property);
-		if (graph == null)
-			return null;
-		final SortedSet<Node> leafNodes = graph.leafNodes(db.connection());
-		if (leafNodes == null)
-			return null;
-		final int[] ids = Questionator.intArray(leafNodes.stream().map(l -> Integer.valueOf(l.itemId)).collect(Collectors.toList()));
-		if (ids == null)
-			return null;
-		return db.filter(ids, "item", "item_id", "popularity < " + ClaimEntity.MIN_POPULARITY_CNT);
-	}
-
+/*
 	public SortedSet<Integer> reduceValidateDelete(final Connection cn, final int[] unpopularItemIds) {
 		final SortedSet<Integer> invalidItemIds = new TreeSet<>();
 		final SortedSet<Integer> validatedItemIds = new TreeSet<>();
@@ -79,4 +91,5 @@ public class Graphs {
 		System.out.println("reduce reconnect all graphs: " + reconnectCount + " new connections [" + (System.currentTimeMillis() - ticks) + "ms]");
 		return true;
 	}
+*/
 }

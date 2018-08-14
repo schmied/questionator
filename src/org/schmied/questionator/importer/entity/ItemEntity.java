@@ -1,11 +1,9 @@
 package org.schmied.questionator.importer.entity;
 
-import java.sql.Connection;
 import java.util.*;
 
 import org.json.JSONObject;
-import org.schmied.questionator.*;
-import org.schmied.questionator.graph.Graphs;
+import org.schmied.questionator.Database;
 
 public class ItemEntity extends ImportEntity {
 
@@ -74,6 +72,7 @@ public class ItemEntity extends ImportEntity {
 
 	// ---------------------------------------------------------------------------------------------------------------- sql
 
+/*
 	public static boolean reduceItems(final Connection cn) {
 		final Database db = new Database(cn);
 		int[] unpopularItemIds = null;
@@ -109,38 +108,34 @@ public class ItemEntity extends ImportEntity {
 				return false;
 		}
 	}
+*/
 
-	public static boolean delete(final Connection cn, final int[] itemIds) {
+//	public static int delete(final Connection cn, final int[] itemIds) throws Exception {
+	public static int delete(final Database db, final int[] itemIds) throws Exception {
+
+		final int[] referenced = db.referenced(itemIds, null);
+		if (referenced.length > 0)
+			throw new Exception("referenced by " + Arrays.toString(referenced));
 
 		final long ticks = System.currentTimeMillis();
-		final Database db = new Database(cn);
+		//final Database db = new Database(cn);
 
 		final int cntClaimGeo = db.delete("claim_geo", "item_id", itemIds);
-		if (cntClaimGeo < 0)
-			return false;
 		final int cntClaimItem = db.delete("claim_item", "item_id", itemIds);
-		if (cntClaimItem < 0)
-			return false;
-		final int cntClaimItemValue = db.delete("claim_item", "value", itemIds);
-		if (cntClaimItemValue < 0)
-			return false;
+		//final int cntClaimItemValue = db.delete("claim_item", "value", itemIds);
 		final int cntClaimQuantity = db.delete("claim_quantity", "item_id", itemIds);
-		if (cntClaimQuantity < 0)
-			return false;
 		final int cntClaimString = db.delete("claim_string", "item_id", itemIds);
-		if (cntClaimString < 0)
-			return false;
 		final int cntClaimTime = db.delete("claim_time", "item_id", itemIds);
-		if (cntClaimTime < 0)
-			return false;
 		final int cntItem = db.delete("item", "item_id", itemIds);
-		if (cntItem < 0)
-			return false;
 
-		System.out.println("delete items: " + cntClaimGeo + " claim_geo, " + cntClaimItem + " claim_item (id), " + cntClaimItemValue + " claim_item (value), "
-				+ cntClaimQuantity + " claim_quantity, " + cntClaimString + " claim_string, " + cntClaimTime + " claim_time, " + cntItem + " item / " + itemIds.length
-				+ " [" + (System.currentTimeMillis() - ticks) + "ms]");
+//		System.out.println("delete items: " + cntClaimGeo + " claim_geo, " + cntClaimItem + " claim_item (id), " + cntClaimItemValue + " claim_item (value), "
+//				+ cntClaimQuantity + " claim_quantity, " + cntClaimString + " claim_string, " + cntClaimTime + " claim_time, " + cntItem + " item / " + itemIds.length
+//				+ " [" + (System.currentTimeMillis() - ticks) + "ms]");
+		System.out.println("delete items: " + cntClaimGeo + " claim_geo, " + cntClaimItem + " claim_item (id), " + cntClaimQuantity + " claim_quantity, " + cntClaimString
+				+ " claim_string, " + cntClaimTime + " claim_time, " + cntItem + " item / " + itemIds.length + " [" + (System.currentTimeMillis() - ticks) + "ms]");
 
-		return true;
+//		return cntClaimGeo + cntClaimItem + cntClaimItemValue + cntClaimQuantity + cntClaimString + cntClaimTime + cntItem;
+//		return cntClaimGeo + cntClaimItem + cntClaimQuantity + cntClaimString + cntClaimTime + cntItem;
+		return cntItem;
 	}
 }

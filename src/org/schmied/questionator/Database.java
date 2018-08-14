@@ -49,7 +49,7 @@ public class Database {
 		return sb.toString();
 	}
 
-	public int[] ids(final String table, final String column, final String where) {
+	public int[] ids(final String table, final String column, final String where) throws Exception {
 		try (final Statement st = connection.createStatement();
 				final ResultSet rs = st.executeQuery("SELECT " + column + " FROM " + table + (where == null ? "" : " WHERE " + where))) {
 			final List<Number> ids = new ArrayList<>();
@@ -57,39 +57,51 @@ public class Database {
 				ids.add((Number) rs.getObject(1));
 			return Questionator.intArray(ids);
 		} catch (final Exception e) {
-			e.printStackTrace();
-			return null;
+			throw e;
 		}
 	}
 
-	public int[] filter(final int ids[], final String table, final String column, final String where) {
+	public int[] referenced(final int ids[], final String where) throws Exception {
+		return whereIn("claim_item", "value", where, "value", ids);
+	}
+
+	public int[] unreferenced(final int ids[], final String where) throws Exception {
+		final int[] referenced = referenced(ids, where);
+		final TreeSet<Integer> unreferenced = new TreeSet<>();
+		for (final int id : ids) {
+			if (Arrays.binarySearch(referenced, id) < 0)
+				unreferenced.add(Integer.valueOf(id));
+		}
+		return Questionator.intArray(unreferenced);
+	}
+
+	public int[] whereIn(final String table, final String columnSelect, final String where, final String columnIn, final int ids[]) throws Exception {
 		final List<Number> filteredIds = new ArrayList<>();
 		for (int intervalBegin = 0; intervalBegin < ids.length; intervalBegin += IN_CLAUSE_MAX_COUNT) {
 			final int[] interval = interval(ids, intervalBegin);
-			final String sql = "SELECT " + column + " FROM " + table + " WHERE " + where + " AND " + column + " IN(" + commaSeparate(interval) + ")";
+			final String w = where == null ? "" : where + " AND ";
+			final String sql = "SELECT " + columnSelect + " FROM " + table + " WHERE " + w + columnIn + " IN (" + commaSeparate(interval) + ")";
 			//System.out.println("---> " + sql);
 			try (final Statement st = connection.createStatement(); final ResultSet rs = st.executeQuery(sql)) {
 				while (rs.next())
 					filteredIds.add((Number) rs.getObject(1));
 			} catch (final Exception e) {
-				e.printStackTrace();
-				return null;
+				throw e;
 			}
 		}
 		return Questionator.intArray(filteredIds);
 	}
 
-	public int delete(final String table, final String column, final int ids[]) {
+	public int delete(final String table, final String column, final int ids[]) throws Exception {
 		int deleteCount = 0;
 		for (int intervalBegin = 0; intervalBegin < ids.length; intervalBegin += IN_CLAUSE_MAX_COUNT) {
 			final int[] interval = interval(ids, intervalBegin);
-			final String sql = "DELETE FROM " + table + " WHERE " + column + " IN(" + commaSeparate(interval) + ")";
+			final String sql = "DELETE FROM " + table + " WHERE " + column + " IN (" + commaSeparate(interval) + ")";
 			//System.out.println("---> " + sql);
 			try (final PreparedStatement ps = connection.prepareStatement(sql)) {
 				deleteCount += ps.executeUpdate();
 			} catch (final Exception e) {
-				e.printStackTrace();
-				return -1;
+				throw e;
 			}
 		}
 		return deleteCount;

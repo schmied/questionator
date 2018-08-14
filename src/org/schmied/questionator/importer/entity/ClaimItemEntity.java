@@ -34,7 +34,7 @@ public class ClaimItemEntity extends ClaimEntity {
 
 	// ---------------------------------------------------------------------------------------------------------------- sql
 
-	public static boolean deleteInvalidReferences(final Connection cn) {
+	public static void deleteInvalidReferences(final Connection cn) throws Exception {
 		final long ticks = System.currentTimeMillis();
 
 		final List<Integer> itemIdList = new ArrayList<>(1024 * 1024);
@@ -42,8 +42,7 @@ public class ClaimItemEntity extends ClaimEntity {
 			while (rs.next())
 				itemIdList.add(Integer.valueOf(rs.getInt(1)));
 		} catch (final SQLException e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
 
 		final List<Integer[]> invalidClaims = new ArrayList<>();
@@ -56,8 +55,7 @@ public class ClaimItemEntity extends ClaimEntity {
 				invalidClaims.add(new Integer[] { Integer.valueOf(rs.getInt(1)), Integer.valueOf(value) });
 			}
 		} catch (final SQLException e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
 
 		try (final PreparedStatement psDeleteClaim = cn.prepareStatement("DELETE FROM claim_item WHERE item_id = ? AND value = ?")) {
@@ -74,12 +72,10 @@ public class ClaimItemEntity extends ClaimEntity {
 			}
 			psDeleteClaim.executeBatch();
 		} catch (final SQLException e) {
-			e.printStackTrace();
-			return false;
+			throw e;
 		}
 
-		System.out.println("delete invalid claims: " + invalidClaims.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
-		return true;
+		System.out.println("delete invalid references: " + invalidClaims.size() + " [" + (System.currentTimeMillis() - ticks) + "ms]");
 	}
 
 	public static boolean deleteRedundant(final Connection cn) {

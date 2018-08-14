@@ -8,10 +8,14 @@ import java.time.LocalTime;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.json.JSONObject;
+import org.schmied.questionator.Database;
+import org.schmied.questionator.graph.*;
 import org.schmied.questionator.importer.db.*;
 import org.schmied.questionator.importer.entity.*;
 
 public abstract class Importer {
+
+	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/latest-all.json.bz2";
 
 	private static final int MAX_ITEMS = 57000000;
 	//private static final int MAX_ITEMS = 100000;
@@ -19,18 +23,18 @@ public abstract class Importer {
 	private static final int BUFFER_SIZE_READER = 16 * 1024;
 	private static final int BUFFER_SIZE_STREAM = 16 * 1024;
 
-	public static boolean importInsert(final Connection cn, final String file) {
+	public static boolean importInsert(final Connection cn) {
 		try {
-			return importAll(new InsertDatabase(cn), file);
+			return importAll(new InsertDatabase(cn));
 		} catch (final SQLException e) {
 			e.printStackTrace();
 			return false;
 		}
 	}
 
-	public static boolean importCopy(final Connection cn, final String file) {
+	public static boolean importCopy(final Connection cn) {
 		try {
-			return importAll(new CopyDatabase(cn), file);
+			return importAll(new CopyDatabase(cn));
 		} catch (final SQLException e) {
 			e.printStackTrace();
 			return false;
@@ -122,7 +126,15 @@ public abstract class Importer {
 		}
 	}
 
-	private static void importFile(final ImporterDatabase db, final Path file) throws Exception {
+	private static void importFile(final ImporterDatabase db) throws Exception {
+
+		final Path file = Paths.get(DUMP_FILE);
+		if (!Files.isRegularFile(file))
+			throw new Exception("file does not exist: " + file.toAbsolutePath().toString());
+
+		db.recreateTables();
+		db.insertProperties();
+
 		if (file.getFileName().toString().toLowerCase().endsWith(".bz2")) {
 			importBzipFile(db, file);
 		} else if (file.getFileName().toString().toLowerCase().endsWith(".json")) {
@@ -130,23 +142,33 @@ public abstract class Importer {
 		} else {
 			throw new Exception("unrecognized file format: " + file.getFileName().toString());
 		}
+
+		db.createIndexes();
+		ClaimItemEntity.deleteInvalidReferences(db.connection());
+		db.addConstraints();
 	}
 
-	private static boolean importAll(final ImporterDatabase db, final String file) {
-
-		final Path path = Paths.get(file);
-		if (!Files.isRegularFile(path)) {
-			System.out.println("file does not exist.");
-			return false;
+	private static int deleteUnpopularLeafTransitives(final Database db) throws Exception {
+		int i = 0;
+		int cnt = 0;
+		final Graphs graphs = new Graphs();
+		for (;;) {
+			System.out.println("delete unpopular leafes #" + i);
+			int cntIter = 0;
+			for (final Graph graph : graphs.graphs().values())
+				cntIter += graph.deleteUnpopularLeafTransitives(db);
+			cnt += cntIter;
+			if (cntIter == 0)
+				return cnt;
+			i++;
 		}
+	}
+
+	private static boolean importAll(final ImporterDatabase db) {
 
 		try {
-			db.recreateTables();
-			db.insertProperties();
-			importFile(db, path);
-			db.createIndexes();
-			ClaimItemEntity.deleteInvalidReferences(db.connection());
-			db.addConstraints();
+			//importFile(db);
+			deleteUnpopularLeafTransitives(db);
 		} catch (final Exception e) {
 			e.printStackTrace();
 			return false;

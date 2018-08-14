@@ -80,7 +80,7 @@ public abstract class ClaimEntity extends ImportEntity {
 				if (propertyId == 31 || propertyId == 279)
 					classes.add(Integer.valueOf(((ClaimItemEntity) claim).value));
 
-				if (Arrays.binarySearch(Graphs.PROPERTIES, propertyId) >= 0)
+				if (Arrays.binarySearch(Graphs.TRANSITIVE_PROPERTIES, propertyId) >= 0)
 					isNode = true;
 			}
 		}

@@ -8,7 +8,6 @@ import org.schmied.questionator.importer.Importer;
 public class Questionator {
 
 	private static final String DB_URL = "jdbc:postgresql://localhost/questionator?user=postgres&password=postgres";
-	private static final String DUMP_FILE = "C:/Users/schmied/Downloads/latest-all.json.bz2";
 
 	private final Connection connection;
 
@@ -59,7 +58,7 @@ public class Questionator {
 			return;
 
 //		Importer.importInsert(q.connection, DUMP_FILE);
-		Importer.importCopy(q.connection, DUMP_FILE);
+		Importer.importCopy(q.connection);
 
 		q.close();
 	}
