@@ -109,7 +109,7 @@ public class PropertyEntity extends ImportEntity {
 			new PropertyEntity(175, "performer", "Interpret"), //
 			new PropertyEntity(176, "manufacturer", "Hersteller"), //
 			new PropertyEntity(178, "developer", "Entwickler"), //
-			new PropertyEntity(179, "series", "Serie"), //
+			new PropertyEntity(179, "part of the series", "Serie"), //
 			new PropertyEntity(180, "depicts", "Motiv"), // inverse 1299
 			new PropertyEntity(181, "taxon range map image", "Verbreitungskarte des Taxons"), //
 			new PropertyEntity(183, "endemic to", "endemisch in"), //
@@ -181,7 +181,7 @@ public class PropertyEntity extends ImportEntity {
 			new PropertyEntity(580, "start time", "Startzeitpunkt"), //
 			new PropertyEntity(582, "end time", "Endzeitpunkt"), //
 			new PropertyEntity(585, "point in time", "Zeitpunkt"), //
-			new PropertyEntity(598, "commander of", "befohlene Einheiten"), //
+			new PropertyEntity(598, "commander of", "befohlene Einheiten"), // inverse 4791
 			new PropertyEntity(606, "first flight", "Zeitpunkt des ersten Flugs"), //
 			new PropertyEntity(607, "conflict", "Kriegseinsatz"), //
 			new PropertyEntity(610, "highest point", "höchster Punkt"), //
@@ -275,6 +275,7 @@ public class PropertyEntity extends ImportEntity {
 			new PropertyEntity(1546, "motto", "Wahlspruch"), //
 			new PropertyEntity(1576, "lifestyle", "Lebensstil"), //
 			new PropertyEntity(1589, "lowest point", "tiefster Punkt"), //
+			new PropertyEntity(1619, "date of official opening", "Eröffnungsdatum"), //
 			new PropertyEntity(1622, "driving side", "Fahrseite"), //
 			new PropertyEntity(1636, "date of baptism in early childhood", "Taufdatum"), //
 			new PropertyEntity(1640, "curator", "Kurator"), //
@@ -291,10 +292,14 @@ public class PropertyEntity extends ImportEntity {
 			new PropertyEntity(2048, "height", "Höhe"), //
 			new PropertyEntity(2049, "width", "Breite"), //
 			new PropertyEntity(2052, "speed", "Geschwindigkeit"), //
+			new PropertyEntity(2053, "watershed area", "Einzugsgebiet (Größe)"), //
+			new PropertyEntity(2054, "density", "Dichte"), //
 			new PropertyEntity(2061, "aspect ratio", "Seitenverhältnis"), //
 			new PropertyEntity(2067, "mass", "Masse"), //
+			new PropertyEntity(2075, "speed of sound", "Schallgeschwindigkeit"), //
 			new PropertyEntity(2101, "melting point", "Schmelzpunkt"), //
 			new PropertyEntity(2102, "boiling point", "Siedepunkt"), //
+			//new PropertyEntity(2113, "sublimation temperature", "Sublimationstemperatur"), //
 			new PropertyEntity(2120, "radius", "Radius"), //
 			new PropertyEntity(2121, "prize money", "Preisgeld"), //
 			new PropertyEntity(2124, "member count", "Mitgliederzahl"), //
@@ -314,6 +319,7 @@ public class PropertyEntity extends ImportEntity {
 			new PropertyEntity(2554, "production designer", "Szenenbildner"), //
 			new PropertyEntity(2596, "culture", "Kultur"), //
 			new PropertyEntity(2632, "place of detention", "Haftort"), //
+			new PropertyEntity(2665, "alcohol by volume", "Alkoholgehalt"), //
 			new PropertyEntity(2853, "electrical plug type", "Stecker-Typ"), //
 			new PropertyEntity(2884, "mains voltage", "Netzspannung"), //
 			new PropertyEntity(2894, "day of week", "Wochentag"), //
@@ -326,15 +332,24 @@ public class PropertyEntity extends ImportEntity {
 			new PropertyEntity(3342, "significant person", "relevante Person"), //
 			new PropertyEntity(3373, "sibling", "Geschwister"), //
 			new PropertyEntity(3716, "social classification", "gesetzlicher sozialer Status"), //
+			new PropertyEntity(3764, "pole position", "Pole Position"), //
 			new PropertyEntity(3780, "active ingredient in", "Wirkstoff in"), //
 			new PropertyEntity(3781, "has active ingredient", "has active ingredient"), //
 			new PropertyEntity(3864, "suicide rate", "Selbstmordrate"), //
+			new PropertyEntity(3999, "date of official closure", "Schließungsdatum"), //
 			new PropertyEntity(4000, "has fruit type", "Fruchttyp"), //
 			new PropertyEntity(4511, "vertical depth", "vertikale Tiefe"), //
 			new PropertyEntity(4552, "mountain range", "Gebirgszug"), //
 			new PropertyEntity(4614, "watershed", "Flusssystem"), //
 			new PropertyEntity(4647, "location of first performance", "Ort der Uraufführung oder Erstausstrahlung"), //
+			new PropertyEntity(4661, "reservoir created", "dadurch gebildeter Stausee"), //
+			new PropertyEntity(4791, "commanded by", "befohlen von"), // inverse 598
+			new PropertyEntity(4792, "dam", "Talsperre"), //
+			new PropertyEntity(4794, "season starts", "Saisonstart"), //
 			new PropertyEntity(4841, "total fertility rate", "Gesamtfruchtbarkeitsrate"), //
+			new PropertyEntity(5053, "fastest lap", "schnellste Runde"), //
+			new PropertyEntity(5138, "season of club or team", "Spielsaison der Mannschaft oder des Vereins"), //
+			new PropertyEntity(5607, "located in the ecclesiastical territorial entity", "liegt in der religiösen Verwaltungseinheit"), //
 			new PropertyEntity(5658, "railway traffic side", "Fahrordnung"), //
 			new PropertyEntity(5832, "political coalition", "Koalition"), //
 			new PropertyEntity(6087, "coach of sports team", "Trainer von Sportteam oder -verein"), //
