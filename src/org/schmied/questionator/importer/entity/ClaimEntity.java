@@ -3,8 +3,6 @@ package org.schmied.questionator.importer.entity;
 import java.util.*;
 
 import org.json.*;
-import org.schmied.questionator._legacy.DClass;
-import org.schmied.questionator.graph.Graphs;
 
 public abstract class ClaimEntity extends ImportEntity {
 
@@ -80,7 +78,7 @@ public abstract class ClaimEntity extends ImportEntity {
 				if (propertyId == 31 || propertyId == 279)
 					classes.add(Integer.valueOf(((ClaimItemEntity) claim).value));
 
-				if (Arrays.binarySearch(Graphs.TRANSITIVE_PROPERTIES, propertyId) >= 0)
+				if (Arrays.binarySearch(TRANSITIVE_PROPERTIES, propertyId) >= 0)
 					isNode = true;
 			}
 		}
@@ -92,12 +90,75 @@ public abstract class ClaimEntity extends ImportEntity {
 
 		// do not allow instances or subclasses of SKIP_CLASS_IDS
 		for (final Integer c : classes) {
-			if (Arrays.binarySearch(DClass.IMPORT_SKIP_CLASS_IDS, c.intValue()) >= 0) {
-				//System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> skip item " + itemId);
+			if (Arrays.binarySearch(SKIP_IDS, c.intValue()) >= 0)
 				return null;
-			}
 		}
 
 		return claims;
+	}
+
+	// ---
+
+	private static final int[] SKIP_IDS = { //
+
+			7187, // gene
+			8054, // protein
+			11053, // RNA
+			21199, // natural number
+			139677, // Operon
+			201448, // transfer RNA
+			277338, // pseudogene
+			284416, // small nucleolar RNA
+			417841, // protein family
+			420927, // protein complex
+			427087, // non-coding RNA
+			898273, // protein domain
+			4167410, // wikimedia disambiguation page
+			4167836, // wikimedia category
+			7644128, // Supersecondary structure
+			11266439, // wikimedia template
+			13366104, // even number
+			13366129, // odd number
+			13406463, // wikimedia list article
+			13442814, // scientific article
+			17633526, // wikinews article
+			14204246, // Wikimedia project page
+			15184295, // Wikimedia module
+			19842659, // Wikimedia user language template
+			20010800, // Wikimedia user language category
+			20747295, // protein-coding gene
+			24719571, // Alcohol dehydrogenase superfamily, zinc-type
+			24726117, // SDR
+			24726420, // ABC transporter, permease
+			24771218, // Transcription regulator HTH, AraC- type
+			24774756, // Olfactory receptor
+			24781630, // Amino acid/polyamine transporter I
+			24781392, // MFS
+			24787504, // Bordetella uptake gene
+
+	};
+	static {
+		Arrays.sort(SKIP_IDS);
+	}
+
+	private static final int[] TRANSITIVE_PROPERTIES = { //
+
+			127, // owned by
+			131, // located in the administrative territorial entity
+			155, // follows
+			156, // followed by
+			171, // parent taxon
+			279, // subclass of
+			355, // subsidiary
+			361, // part of
+			527, // has part
+			749, // parent organization
+			1365, // replaces
+			1366, // replaced by
+			1830, // owner of
+
+	};
+	static {
+		Arrays.sort(TRANSITIVE_PROPERTIES);
 	}
 }

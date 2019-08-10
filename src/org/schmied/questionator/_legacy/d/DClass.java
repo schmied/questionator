@@ -1,11 +1,9 @@
-package org.schmied.questionator._legacy;
+package org.schmied.questionator._legacy.d;
 
-import java.sql.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.schmied.questionator.Questionator;
 import org.schmied.questionator.importer.entity.ImportEntity;
 
 @SuppressWarnings("all")
@@ -467,6 +465,7 @@ public class DClass extends ImportEntity implements Comparable<Object> {
 	}
 */
 
+/*
 	private static SortedMap<Integer, DClass> allCardinalClasses(final Connection cn, final Collection<Integer> allCardinalClassIds) {
 		try {
 			final int[] classIds = Questionator.intArray(allCardinalClassIds);
@@ -626,6 +625,7 @@ public class DClass extends ImportEntity implements Comparable<Object> {
 			return null;
 		}
 	}
+*/
 
 /*
 	public static boolean initClasses(final Connection cn) {
@@ -763,6 +763,7 @@ public class DClass extends ImportEntity implements Comparable<Object> {
 
 	// ---------------------------------------------------------------------------------------------------------------- class definition
 
+/*
 	private static final int[] UNWANTED_CARDINAL_CLASSES = { //
 			562061, // marktgemeinde
 			//			928830, // metro station
@@ -771,7 +772,9 @@ public class DClass extends ImportEntity implements Comparable<Object> {
 			1799794, // administrative territorial entity of a specific level
 			15916867, // administrative territorial entity of a single country
 	};
+*/
 
+/*
 	public static final int[] IMPORT_SKIP_CLASS_IDS = { //
 
 //			21674689, // admin-territorial entity of Ukraine
@@ -820,7 +823,8 @@ public class DClass extends ImportEntity implements Comparable<Object> {
 	};
 
 	static {
-		Arrays.sort(UNWANTED_CARDINAL_CLASSES);
+		//Arrays.sort(UNWANTED_CARDINAL_CLASSES);
 		Arrays.sort(IMPORT_SKIP_CLASS_IDS);
 	}
+*/
 }

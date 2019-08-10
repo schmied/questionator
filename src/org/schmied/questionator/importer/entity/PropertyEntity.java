@@ -45,7 +45,7 @@ public class PropertyEntity extends ImportEntity {
 			new PropertyEntity(30, "continent", "Kontinent"), //
 			new PropertyEntity(31, "instance of", "ist ein(e)"), //
 			new PropertyEntity(35, "head of state", "Staatsoberhaupt"), //
-			new PropertyEntity(36, "capital", "Hauptstadt"), //
+			new PropertyEntity(36, "capital", "Hauptstadt"), // inverse 1376
 			new PropertyEntity(37, "official language", "Amtssprache"), //
 			new PropertyEntity(38, "currency", "Währung"), //
 			new PropertyEntity(39, "position held", "öffentliches Amt oder Stellung"), //
@@ -260,7 +260,7 @@ public class PropertyEntity extends ImportEntity {
 			new PropertyEntity(1346, "winner", "Sieger"), // inverse 2522
 			new PropertyEntity(1365, "replaces", "ersetzt"), // inverse 1366
 			new PropertyEntity(1366, "replaced by", "ersetzt durch"), // inverse 1365
-			new PropertyEntity(1376, "capital of", "Hauptstadt von"), //
+			new PropertyEntity(1376, "capital of", "Hauptstadt von"), // inverse 36
 			new PropertyEntity(1387, "political alignment", "politische Ausrichtung"), //
 			new PropertyEntity(1399, "convicted of", "verurteilt wegen"), //
 			new PropertyEntity(1412, "languages spoken, written or signed", "gesprochene oder publizierte Sprachen"), //

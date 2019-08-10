@@ -1,9 +1,9 @@
-package org.schmied.questionator;
+package org.schmied.questionator._legacy;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.schmied.questionator._legacy.DClass;
+import org.schmied.questionator._legacy.d.DClass;
 
 public class Topic implements Comparable<Object> {
 

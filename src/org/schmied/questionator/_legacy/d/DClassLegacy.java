@@ -1,4 +1,4 @@
-package org.schmied.questionator._legacy;
+package org.schmied.questionator._legacy.d;
 
 @Deprecated
 public class DClassLegacy {

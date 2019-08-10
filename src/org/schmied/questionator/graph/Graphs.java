@@ -1,9 +1,7 @@
 package org.schmied.questionator.graph;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-import org.schmied.questionator.Questionator;
 import org.schmied.questionator.graph.Graph.Definition;
 
 public class Graphs {
@@ -37,11 +35,13 @@ public class Graphs {
 		DEFINITIONS.put(Name.PARENT_ORGANIZATION, new Definition(749, null));
 	}
 
+/*
 	public static final int[] TRANSITIVE_PROPERTIES;
 	static {
 		final Set<Integer> props = DEFINITIONS.values().stream().map(d -> Integer.valueOf(d.transitiveProperty)).collect(Collectors.toSet());
 		TRANSITIVE_PROPERTIES = Questionator.intArray(props);
 	}
+*/
 
 	private final SortedMap<Name, Graph> graphs;
 
